@@ -1,4 +1,4 @@
-create table if not exists concert
+create table concert
 (
     concert_id           serial
         constraint concert_pk
@@ -17,32 +17,29 @@ create table if not exists concert
 alter table concert
     owner to postgres;
 
-create unique index if not exists concert_concert_id_uindex
+create unique index concert_concert_id_uindex
     on concert (concert_id);
 
-create table if not exists reservations
+create table reservation
 (
     res_id                   serial
-        constraint reservations_pk
+        constraint reservation_pk
             primary key,
     concert_id               integer
         constraint reservations_concert_concert_id_fk
             references concert,
-    user_email               varchar,
-    user_name                varchar,
+    user_email               varchar not null,
+    user_name                varchar not null,
     tickets_full_price       integer default 0,
     tickets_student_price    integer default 0,
     payment_reference        varchar,
     date_reservation_created date,
     date_paid                date,
     finalized                boolean default false,
-    canceled                 boolean default false
+    canceled                 boolean default false,
+    date_email_activated     date
 );
 
-alter table reservations
+alter table reservation
     owner to postgres;
-
-create unique index if not exists reservations_res_id_uindex
-    on reservations (res_id);
-
 
