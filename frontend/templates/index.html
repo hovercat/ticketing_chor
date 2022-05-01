@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+    <head>
+        <title>Kartenreservierung TU Chor</title>
+        <!--- TODO add here some javascript that throws an error if total cards > cards available-->
+    </head>
+    <body>
+        <h2>Herzlich willkommen zum Ticketverkaufstool</h1>
+        <span class="introtext">
+            Aktuell sind noch {{ cards_left }} Karten zum Verkauf verfügbar!
+            <ol>
+                <li>Studentenpreis: {{ price_student }}€</li>
+                <li>Erwachsenen und Kinderpreis: {{ price_full }}€</li>
+            </ol>
+        </span>
+        <h1>Reservierungsformular</h2>
+        <form method="POST" action="/reserved">
+            <select id="concertdate">
+                <option>Montag 13.13.33</option>
+                <option>Dienst 2:14.13.13</option>
+            </select>
+            <label for="concertdate">Konzerttag</label><br>
+            <input type="text" id="name">
+            <label for="name">Name</label><br>
+            <input type="email" id="email" name="email">
+            <label for="email">E-Mail Addresse</label><br>
+            <input type="number" max="10" min="0" id="poor_people_tickets">
+            <label for="poor_people_tickets">Tickets Studentenpreis</label><br>
+            <input type="number" max="11" min="0" id="tickets_full">
+            <label for="tickets_full">Tickets Vollpreis</label><br>
+            <input type="Submit" value="Reservierung Abschicken!">
+        </form>
+    </body>
