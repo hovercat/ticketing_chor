@@ -1,6 +1,6 @@
 create table if not exists concert
 (
-    concert_id           integer not null
+    concert_id           serial
         constraint concert_pk
             primary key,
     date_sale_start      date,
@@ -22,7 +22,7 @@ create unique index if not exists concert_concert_id_uindex
 
 create table if not exists reservations
 (
-    res_id                   integer not null
+    res_id                   serial
         constraint reservations_pk
             primary key,
     concert_id               integer

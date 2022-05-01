@@ -1,0 +1,41 @@
+
+Was wir brauchen:
+
+- Formular auf TU Chor Website (Rafael-System?):
+Reservieren:
+Mail an Person die reserviert mit Zahlungsaufforderung und generierte Verwendungszweck-Nummer
+Eintrag in Daten
+Reservierung geschlossen:
+x Tage vor Konzert, wenn Überweisungen sich nicht mehr ausgehen
+Wenn keine Karten mehr über sind
+
+- CRON Job
+Periodischer Check des Bankkontos
+Vergleicht eingegangene Zahlungen mit offenen Reservierungen
+Wenn Verwendungszweck und Betrag mit Reservierung übereinstimmen:
+Aussenden von Tickets oder Zahlungsbestätigung, Rechnung?
+Reservierung abgeschlossen
+Wenn Verwendungszweck gleich ist, Betrag aber zu klein ist:
+Aussenden von Mail an Kunde, dass Betrag zu klein ist.
+Verlängern des Zeitfensters bis geschlossen
+Wenn Verwendungszweck gleich ist, Betrag aber zu groß:
+Alert an zuständigen Chorvorstand (also Kassier oder Ulrich, oder Andi)
+Wenn Verwendungszweck nicht zugeordnet werden kann:
+Alert an zuständigen Chorvorstand (also Kassier oder Ulrich)
+Wenn Reservierung länger als x Tage offen, aber kein Zahlungseingang:
+Erinnerungsmail an Kunde schicken
+Flag setzen, dass erinnert wurde
+Wenn Reservierung länger als x' Tage offen, und Kunde erinnert wurde:
+Schließen der Reservierung, Kunde verständigen.
+
+- Weiters:
+Übersichtliche Ansicht f. Chorvorstand nötig:
+Wie viele Reservierungen sind offen
+Wie viele Reservierungen sind abgeschlossen
+Eintragungsmöglichkeit für Bar-Verkäufe
+Eintragungsmöglichkeit um Autostorno aufzuschieben
+
+
+Offene Fragen:
+Welcher Mail-Account schickt Mails aus?
+Evtl. chor+tickets@tuwien.ac.at benutzen
