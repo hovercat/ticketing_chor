@@ -1,0 +1,29 @@
+Konzert:
+- konzert_id
+- datum_start_verkauf
+- datum_ende_verkauf
+- datum_konzert
+- name
+- location
+- tickets_max
+- vollpreis
+- studipreis
+- dauer_mahnung
+- dauer_cancel
+
+Reservierung:
+- res_id
+- konzert_id
+- email
+- name
+- tickets_vollpreis
+- tickets_studipreis
+- zahlungsreferenz
+- datum_reserviert
+- bezahlt
+- datum_bezahlt
+- cancelled
+
+
+> Reservierung bearbeiten Link:
+>> Cancel Reservierung
