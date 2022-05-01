@@ -1,0 +1,1 @@
+conda activate event_ticketing
