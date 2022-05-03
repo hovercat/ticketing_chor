@@ -1,11 +1,13 @@
 # get access and refresh tokens
-curl -X POST "https://ob.nordigen.com/api/v2/token/new/" \
+curl -X POST "https://ob.nordigen.com/api/v2/token/new/" \                                                                                              ✔  base  
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d "{
-        'secret_id': '$SECRET_ID',
-        'secret_key': '$SECRET_KEY'
+        \"secret_id\": \"$SECRET_ID\",
+        \"secret_key\": \"$SECRET_KEY\"
     }"
+
+
 
 
 # when access token expires, refresh using refresh token
