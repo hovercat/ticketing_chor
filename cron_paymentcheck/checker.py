@@ -50,7 +50,7 @@ def add_transaction_to_db(db, nordigen_transactions):
         db_trans.payment_date = datetime.strptime(t['bookingDate'], '%Y-%m-%d')
         db_trans.debtor_iban = t.get('debtorAccount', {'iban': None})['iban']
         db_trans.debtor_name = t.get('debtorName', None)
-        db_trans.handled = False
+        db_trans.status = Mapper.Payment_Status.new
 
         db.session.add(db_trans)
 
@@ -64,17 +64,29 @@ def connect_transactions_and_reservations(db):
     query_result = db.session.execute(query)
 
     for t, r in query_result:
+        t.status = Mapper.Payment_Status.valid
         t.reservation = r
 
     db.session.commit()
 
+def handle_reservations(db):
+    #  get all reservations not yet finalized
+    query = sqlalchemy.sql.select(db.Reservation).where(db.Reservation.status != Mapper.Reservation_Status.finalized)
+    query_result = db.session.execute(query)
+
+    for r in query_result:
+        #
+        pass
 
 def handle_transactions(db):
     # get all transactions not yet handled
     # t <- db
-    query = sqlalchemy.sql.select(db.Reservation).where(db.Transaction.handled == False).join(db.Reservation,
-                                                                                              db.Reservation.res_id == db.Transaction.res_id)
-    query_result = db.session.execute(query)
+    # query = sqlalchemy.sql.select(db.Reservation)\
+    #     .where(db.Transaction.handled == False)\
+    #     .join(db.Reservation, db.Reservation.res_id == db.Transaction.res_id)
+    #
+    # query_result = db.session.execute(query)
+
 
     # loop through reservations
     for r in query_result:
