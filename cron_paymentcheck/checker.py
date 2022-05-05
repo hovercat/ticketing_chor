@@ -14,8 +14,6 @@ parser.add_argument('--account_token', type=str, required=True)
 parser.add_argument('--refresh_token', type=str, required=True)
 parser.add_argument('--sql_connector', type=str, required=True)
 
-args = parser.parse_args()
-
 
 def establish_api(secret_id, secret_key, refresh_token):
     # setup nordigen client
@@ -69,6 +67,31 @@ def connect_transactions_and_reservations(db):
 
     db.session.commit()
 
+
+def cancel_reservation(db, reservation):
+    pass
+
+
+def finalize_reservation(db, reservation):
+    pass
+
+
+def remind_reservation(db, reservation):
+    pass
+
+
+def paid_too_little_reservation(db, reservation):
+    pass
+
+
+def paid_too_much_reservation(db, reservation):
+    pass
+
+
+def already_canceled_but_paid(db, reservation):
+    pass
+
+
 def handle_reservations(db):
     #  get all reservations not yet finalized
     query = sqlalchemy.sql.select(db.Reservation).where(db.Reservation.status != Mapper.Reservation_Status.finalized)
@@ -76,30 +99,6 @@ def handle_reservations(db):
 
     for r in query_result:
         #
-        pass
-
-def handle_transactions(db):
-    # get all transactions not yet handled
-    # t <- db
-    # query = sqlalchemy.sql.select(db.Reservation)\
-    #     .where(db.Transaction.handled == False)\
-    #     .join(db.Reservation, db.Reservation.res_id == db.Transaction.res_id)
-    #
-    # query_result = db.session.execute(query)
-
-
-    # loop through reservations
-    for r in query_result:
-        # check whether all has been paid
-        exp_total = 10
-        paid_total = 10
-
-        # if exp == paid
-        #  send out mail and finalize
-        # elif exp > paid # paid too little
-        #  do something, e.g. send mail informing of too little payment
-        # else # too much paid
-        #  do something
         pass
 
 
@@ -119,8 +118,34 @@ def main(args):
     connect_transactions_and_reservations(db)
 
     # finalize reservations
-    handle_transactions(db)
+    # handle_transactions(db)
 
 
-main(args)
-print(1)
+if __name__ == '__main__':
+    args = parser.parse_args()
+    main(args)
+    print(1)
+
+
+def spot_and_assign_transactions(db: Mapper, transactions: Mapper.Transaction):
+    for t in transactions:
+        res_iterator = db.session.execute(
+            sqlalchemy.sql.select(Mapper.Reservation)
+                .where(Mapper.Reservation.payment_reference == t.payment_reference)
+        ).first()
+        if res_iterator is not None:
+            r = res_iterator[0]
+            t.reservation = r
+            t.status = 'valid'
+        else:
+            t.status = 'unrelated'
+
+
+def check_reservation(db, res):
+    raise NotImplementedError
+
+
+def check_reservations(db: Mapper):
+    reservations = db.session.execute(sqlalchemy.sql.select(db.Reservation))
+    for r in reservations:
+        check_reservation(db, r)

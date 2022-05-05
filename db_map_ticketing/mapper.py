@@ -67,7 +67,10 @@ class Mapper:
         Column('student_price', Float(2)),
         Column('duration_reminder', Integer),
         Column('duration_cancelation', Integer),
-        Column('date_concert', Date)
+        Column('date_concert', Date),
+        Column('date_sale_start', Date),
+        Column('date_sale_end', Date),
+        Column('tickets_available', Integer)
     )
 
     class Concert:
@@ -86,8 +89,10 @@ class Mapper:
         Column('date_reservation_created', Date),
         Column('date_email_activated', Date),
         Column('date_reminded', Date),
-        Column('status', Integer, ForeignKey('reservation_status.rs_id')),
-        Column('pay_state', Integer, ForeignKey('reservation_payment_status.rps_id'))
+        # Column('status', Integer, ForeignKey('reservation_status.rs_id')),
+        # Column('pay_state', Integer, ForeignKey('reservation_payment_status.rps_id'))
+        Column('status', String),
+        Column('pay_state', String)
     )
 
     class Reservation:
@@ -114,7 +119,8 @@ class Mapper:
         Column('debtor_name', String),
         Column('payment_date', Date),
         Column('bank_transaction_id', String),
-        Column('status', Integer, ForeignKey('payment_status.ps_id'))
+       # Column('status', Integer, ForeignKey('payment_status.ps_id'))
+        Column('status', String)
     )
 
     class Transaction:
@@ -123,13 +129,13 @@ class Mapper:
     mapper_registry.map_imperatively(Payment_Status, payment_status_table)
     mapper_registry.map_imperatively(Reservation_Status, reservation_status_table)
     mapper_registry.map_imperatively(Reservation_Payment_Status, reservation_payment_status_table)
-    mapper_registry.map_imperatively(Transaction, transaction_table, properties={
-        'payment_status': relationship(Payment_Status, backref='transactions')
-    })
+    mapper_registry.map_imperatively(Transaction, transaction_table) #properties={
+    #    'payment_status': relationship(Payment_Status, backref='transactions')
+    #})
     mapper_registry.map_imperatively(Reservation, reservation_table, properties={
-        'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id),
-        'reservation_status': relationship(Reservation_Status, backref='reservations'),
-        'reservation_payment_status': relationship(Reservation_Payment_Status, backref='reservations')
+        'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id)#,
+      #  'reservation_status': relationship(Reservation_Status, backref='reservations'),
+      #  'reservation_payment_status': relationship(Reservation_Payment_Status, backref='reservations')
     })
     mapper_registry.map_imperatively(Concert, concert_table, properties={
         'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
@@ -138,4 +144,4 @@ class Mapper:
         self.engine = db.create_engine(dbconnector, connect_args={'options': '-csearch_path=ticketing'})  # schema name
         self.connection = self.engine.connect()
         self.metadata = db.MetaData()
-        self.session = Session(self.engine)
+        self.session = Session(self.engine, autoflush=False)

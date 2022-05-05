@@ -1,4 +1,4 @@
-SET search_path TO testing;
+SET search_path TO ticketing;
 
 DROP TABLE IF EXISTS transaction;
 DROP TABLE IF EXISTS reservation;
@@ -7,10 +7,10 @@ DROP TABLE IF EXISTS reservation_status;
 DROP TABLE IF EXISTS payment_status;
 DROP TABLE IF EXISTS reservation_payment_status;
 
-DROP SCHEMA IF EXISTS testing;
-CREATE SCHEMA testing;
+DROP SCHEMA IF EXISTS ticketing;
+CREATE SCHEMA ticketing;
 
-SET search_path TO testing;
+SET search_path TO ticketing;
 
 create table concert
 (
@@ -90,12 +90,8 @@ create table reservation
     date_reservation_created date    default CURRENT_DATE,
     date_email_activated     date,
     date_reminded            date,
-    status                   integer
-        constraint reservation_reservation_status_rs_id_fk
-            references reservation_status,
-    pay_state                integer
-        constraint reservation_reservation_payment_status_rps_id_fk
-            references reservation_payment_status
+    status                   varchar,
+    pay_state                varchar
 );
 
 alter table reservation
@@ -116,9 +112,7 @@ create table transaction
         constraint transaction_reservation_res_id_fk
             references reservation,
     bank_transaction_id varchar,
-    status              integer
-        constraint transaction_payment_status_ps_id_fk
-            references payment_status
+    status              varchar
 );
 
 alter table transaction
