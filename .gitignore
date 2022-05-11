@@ -1,2 +1,3 @@
 secret_tokens.sh
 *.pyc
+mail_secrets.py
