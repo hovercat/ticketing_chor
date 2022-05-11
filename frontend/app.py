@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from ..mapper import Mapper
 import json
 app = Flask(__name__)
-SQL_CONNECTOR = "postgresql://postgres:ksg123@localhost:5432/"
+SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 db = Mapper(SQL_CONNECTOR)
 
 @app.route("/")
@@ -12,9 +12,14 @@ def landing():
 @app.route("/reserved", methods=['GET', 'POST'])
 def reserved():
     if request.method == 'POST': # Maybe just have one function for landing & confirmed page?
+        #TODO: IMplement doing the reservation
         return render_template("confirm.html", email=request.form['email'])
     elif request.method == 'GET':
         return "Error"
+
+@app.route("/confirm/<reservation_hash>")
+def confirm_reservation(reservation_hash):
+    pass #implement activation logic
 
 @app.route("/queryseats/<id>", methods=['GET'])
 def getseats(id):

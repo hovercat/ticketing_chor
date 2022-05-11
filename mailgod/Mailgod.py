@@ -29,6 +29,8 @@ class Mailgod:
         self.log_file = log_file
 
     def send_mail(self, _to: list, _subject: str, _message: str, _bcc: list = [], _respond_to: str = None) -> None:
+        return
+
         with open(self.log_file, 'a') as log:
             #  Setup log entry
             log.write("===================================================================\n")
@@ -43,7 +45,7 @@ class Mailgod:
             msg['From'] = from_header
             if _respond_to is not None:
                 msg.add_header('reply-to', _respond_to)
-            msg.set_content(MIMEText(_message, 'html'))
+            msg.set_content(_message)
 
             #  Log mail
             log.writelines([
@@ -51,7 +53,7 @@ class Mailgod:
                 "\tReceivers: {}\n".format(msg['To']),
                 "\tBCC Receivers: {}\n".format(msg['Bcc']),
                 "\tFrom Header: {}\n".format(msg['From']),
-                "\tContent: {}\n".format(msg.get_content())
+                "\tContent: {}\n".format(_message)
             ])
 
             # Connect to mail host
