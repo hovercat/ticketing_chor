@@ -166,6 +166,7 @@ def check_payment_reservation(db, res: Mapper.Reservation):
 
 def check_overdue_reservations(db, res):
     # wat do here?
+    pass
 
 
 def check_reservations(db: Mapper):
