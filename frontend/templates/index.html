@@ -15,8 +15,9 @@
         <h1>Reservierungsformular</h2>
         <form method="POST" action="/reserved">
             <select id="concertdate">
-                <option>Montag 13.13.33</option>
-                <option>Dienst 2:14.13.13</option>
+                {% for concert  in concerts %}
+                    <option value="{{ concert.concert_id }}">{{ concert.date_concert }}</option>
+                {% endfor %}
             </select>
             <label for="concertdate">Konzerttag</label><br>
             <input type="text" id="name">
