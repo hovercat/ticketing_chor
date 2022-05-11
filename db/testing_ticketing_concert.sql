@@ -1,0 +1,1 @@
+INSERT INTO ticketing.concert (concert_id, date_sale_start, date_sale_end, date_concert, concert_title, concert_location, full_price, student_price, duration_reminder, duration_cancelation, total_tickets) VALUES (1, '2022-04-27', '2022-05-25', '2022-06-01', null, null, 100, 1, 4, 10, 200);

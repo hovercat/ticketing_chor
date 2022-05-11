@@ -1,0 +1,1 @@
+INSERT INTO ticketing.reservation (res_id, concert_id, user_email, user_name, tickets_full_price, tickets_student_price, payment_reference, date_reservation_created, date_email_activated, date_reminded, status, pay_state) VALUES (1, 1, 'aschl.uli+test@gmail.com', 'test_ulrich', 4, 2, 'xyz', '2022-05-11', '2022-05-11', null, 'new', 'none');
