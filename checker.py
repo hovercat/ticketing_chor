@@ -5,6 +5,7 @@ import sqlalchemy
 from nordigen import NordigenClient
 from argparse import ArgumentParser
 
+from mailgod.Mailgod import Mailgod
 from mapper import Mapper
 
 parser = ArgumentParser()
@@ -133,22 +134,19 @@ def spot_and_assign_transactions(db: Mapper, transactions: Mapper.Transaction):
             t.status = 'unrelated'
 
 
-def check_payment_reservation(db, res: Mapper.Reservation):
+def check_payment_reservation(mailgod: Mailgod, res: Mapper.Reservation):
     if res.status in ['open', 'open_reminded']:
         # finalize if all correct
         if res.get_paid_amount() == res.get_expected_amount():
-            finalize_reservation()
-            res.status = 'finalized'
+            res.finalize(mailgod)
             pass
         # disputed if smaller than expected and TODO tell someone
         elif res.get_paid_amount() < res.get_expected_amount():
-            # send_mail to person in charge
-            res.status = 'disputed'
+            # send_mail to person in charge'
             pass
         # finalized if paid is bigger than expected and TODO tell someone!
         elif res.get_paid_amount() > res.get_expected_amount():
             # send_mail
-            res.status = 'finalized'
             pass
 
     if res.status in ['canceled']: # todo status deleted machen irgendwo

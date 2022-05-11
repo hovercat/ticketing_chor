@@ -3,6 +3,7 @@ import smtplib
 import ssl
 from email.header import Header
 from email.message import EmailMessage
+from email.mime.text import MIMEText
 from email.utils import formataddr
 
 
@@ -42,7 +43,7 @@ class Mailgod:
             msg['From'] = from_header
             if _respond_to is not None:
                 msg.add_header('reply-to', _respond_to)
-            msg.set_content(_message)
+            msg.set_content(MIMEText(_message, 'html'))
 
             #  Log mail
             log.writelines([
@@ -64,7 +65,7 @@ class Mailgod:
                     smtp.login(self.mail_usr, self.mail_pwd)
                     log.write('[success]\n')
 
-                    log.write('Attempting to send emails ')
+                    log.write('Attempting to send email_templates ')
                     smtp.sendmail(self._from, [*_to, *_bcc], msg.as_string())
                     log.write('[success]\n')
 

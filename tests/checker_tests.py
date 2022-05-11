@@ -8,6 +8,7 @@ from psycopg2 import connect, sql
 import unittest
 
 import checker
+from mailgod.Mailgod import Mailgod
 from mapper import Mapper
 
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
@@ -15,13 +16,24 @@ SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 
 class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
+        import mail_secrets as ms
+        self.mailgod = Mailgod(
+            mail_usr=ms.user,
+            mail_pwd=ms.password,
+            mail_host=ms.host,
+            mail_port=ms.port,
+            _from_name=ms.name_sender,
+            _from=ms.address_sender,
+            log_file='mail.log'
+        )
+
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush
 
-        with open('../db/drop_tables.sql') as file:
+        with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
-        with open('../db/create_tables.sql') as file:
+        with open('db/create_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
@@ -82,9 +94,10 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.db.session.add(self.concert)
+        self.db.session.commit()
 
     def tearDown(self) -> None:
-        with open('../db/drop_tables.sql') as file:
+        with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
@@ -99,7 +112,7 @@ class CheckerTests(unittest.TestCase):
     def test_check_reservation_finalize(self):
         self.res.status = 'open'
         self.t1.reservation = self.res
-        checker.check_payment_reservation(self.db, self.res)
+        checker.check_payment_reservation(self.mailgod, self.res)
         self.assertIs(self.res.status, 'finalized')
 
     def test_check_reservation_too_little(self):

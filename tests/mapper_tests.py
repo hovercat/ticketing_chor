@@ -18,10 +18,10 @@ class CheckerTests(unittest.TestCase):
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush
 
-        with open('../db/drop_tables.sql') as file:
+        with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
-        with open('../db/create_tables.sql') as file:
+        with open('db/create_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
@@ -82,9 +82,10 @@ class CheckerTests(unittest.TestCase):
         )
 
         self.db.session.add(self.concert)
+        self.db.session.commit()
 
     def tearDown(self) -> None:
-        with open('../db/drop_tables.sql') as file:
+        with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
@@ -155,6 +156,7 @@ class CheckerTests(unittest.TestCase):
         self.assertEqual(len(concerts), 1)
         self.assertEqual(concerts[0], self.concert)
         self.concert.date_sale_end = datetime.datetime.today() - datetime.timedelta(hours=1)
+        self.db.session.commit()
         self.assertListEqual(self.db.get_concerts(), [])
 
 HOST = 'localhost'

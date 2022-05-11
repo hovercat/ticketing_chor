@@ -2,10 +2,13 @@ import enum
 from datetime import datetime
 
 import sqlalchemy.sql
+from flask import render_template
 from sqlalchemy.orm import Session, registry, relationship
 import sqlalchemy as db
 from sqlalchemy import Column, String, Integer, Boolean, Date, Table, ForeignKey, Float, orm, Enum
 import hashlib
+
+from mailgod.Mailgod import Mailgod
 
 
 class Mapper:
@@ -67,8 +70,6 @@ class Mapper:
         Column('date_reservation_created', Date),
         Column('date_email_activated', Date),
         Column('date_reminded', Date),
-        # Column('status', Integer, ForeignKey('reservation_status.rs_id')),
-        # Column('pay_state', Integer, ForeignKey('reservation_payment_status.rps_id'))
         Column('status', String),
         Column('pay_state', String)
     )
@@ -84,6 +85,24 @@ class Mapper:
 
         def get_paid_amount(self):  # TODO test
             return sum(payment.amount for payment in self.transactions)
+
+        def reserve(self, mailgod: Mailgod):
+            pass
+
+        def finalize(self, mailgod: Mailgod):
+            self.status = 'finalized'
+            with open("email_templates/finalize.html", 'r') as mail_template:
+                mail_template_text = ''.join(mail_template.readlines())
+                mail_msg = mail_template_text.format(
+                    name=self.user_name,
+                    tickets=self.tickets_full_price + self.tickets_student_price,
+                    concert_name=self.concert.concert_title
+                )
+                mailgod.send_mail(
+                    [self.user_email],
+                    _subject='Tickets sind bezahlt!',
+                    _message=mail_msg
+                )
 
     transaction_table = Table(
         'transaction',
@@ -112,7 +131,7 @@ class Mapper:
         'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
 
     def get_concerts(self):
-        concert_query = sqlalchemy.sql.select(Mapper.Concert)\
-            .where(datetime.today() > Mapper.Concert.date_sale_start)\
+        concert_query = sqlalchemy.sql.select(Mapper.Concert) \
+            .where(datetime.today() > Mapper.Concert.date_sale_start) \
             .where(datetime.today() < Mapper.Concert.date_sale_end)
         return [c for c, in self.session.execute(concert_query)]
