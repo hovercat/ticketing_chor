@@ -5,7 +5,7 @@ import sqlalchemy
 from nordigen import NordigenClient
 from argparse import ArgumentParser
 
-from db_map_ticketing.mapper import Mapper
+from mapper import Mapper
 
 parser = ArgumentParser()
 parser.add_argument('--secret_key', type=str, required=True)

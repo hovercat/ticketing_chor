@@ -1,40 +1,45 @@
 import datetime
 
+import sqlalchemy
 from sqlalchemy.orm import Session
 import sqlalchemy as db
 from psycopg2 import connect, sql
 
 import unittest
 
-from cron_paymentcheck import checker
-from db_map_ticketing.mapper import Mapper
+import checker
+from mapper import Mapper
 
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
-DB = 'testing'
-USR = 'postgres'
-HOST = 'localhost'
-PORT = 5432
 
 
 class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.db = Mapper(SQL_CONNECTOR)
-        self.db.session.no_autoflush  # TODO WAT
+        self.db.session.no_autoflush
+
+        with open('../db/drop_tables.sql') as file:
+            query = sqlalchemy.text(file.read())
+            self.db.session.execute(query)
+        with open('../db/create_tables.sql') as file:
+            query = sqlalchemy.text(file.read())
+            self.db.session.execute(query)
+
         self.concert = Mapper.Concert(
             concert_id=1,
-            date_sale_start=datetime.datetime.today() - datetime.timedelta(days=14),
-            date_sale_end=datetime.datetime.today() + datetime.timedelta(days=14),
-            date_concert=datetime.datetime.today() + datetime.timedelta(days=21),
+            date_sale_start=(datetime.datetime.today() - datetime.timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S'),
+            date_sale_end=(datetime.datetime.today() + datetime.timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S'),
+            date_concert=(datetime.datetime.today() + datetime.timedelta(days=21)).strftime('%Y-%m-%d %H:%M:%S'),
             full_price=100, student_price=1,
-            duration_reminder=4, duration_cancelation=10, tickets_available=200
+            duration_reminder=4, duration_cancelation=10, total_tickets=200
         )
         self.res = Mapper.Reservation(
             res_id=1,
             user_email='aschl.uli+test@gmail.com',
             user_name='test_ulrich',
             tickets_full_price=4, tickets_student_price=2,
-            date_reservation_created=datetime.datetime.today(),
-            date_email_activated=datetime.datetime.today(),
+            date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            date_email_activated=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             status='new',
             pay_state='none',
             payment_reference='xyz'
@@ -79,6 +84,10 @@ class CheckerTests(unittest.TestCase):
         self.db.session.add(self.concert)
 
     def tearDown(self) -> None:
+        with open('../db/drop_tables.sql') as file:
+            query = sqlalchemy.text(file.read())
+            self.db.session.execute(query)
+
         self.db.session.rollback()
         self.db.session.close()
 
