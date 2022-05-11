@@ -1,10 +1,8 @@
 import datetime
 
-import sqlalchemy.sql
-from sqlalchemy.orm import Session, InstanceEvents
+from sqlalchemy.orm import Session
 import sqlalchemy as db
 from psycopg2 import connect, sql
-import sys
 
 import unittest
 
@@ -14,10 +12,14 @@ from db_map_ticketing.mapper import Mapper
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 DB = 'testing'
 USR = 'postgres'
+HOST = 'localhost'
+PORT = 5432
+
+
 class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.db = Mapper(SQL_CONNECTOR)
-        self.db.session.no_autoflush
+        self.db.session.no_autoflush  # TODO WAT
         self.concert = Mapper.Concert(
             concert_id=1,
             date_sale_start=datetime.datetime.today() - datetime.timedelta(days=14),
@@ -80,35 +82,50 @@ class CheckerTests(unittest.TestCase):
         self.db.session.rollback()
         self.db.session.close()
 
-    def test_reservation_get_expected_amount(self):
-        self.assertEqual(self.res.get_paid_amount(), 0)
-        self.res.transactions.append(self.t1)
-        self.assertEqual(self.res.get_paid_amount(), 402)
-        self.res.transactions.append(self.t2)
-        self.assertEqual(self.res.get_paid_amount(), 801)
+    def test_spot_and_assign_transactions(self):
+        checker.spot_and_assign_transactions(self.db, [self.t1, self.t4])
+        self.assertIs(self.t1.status, 'valid')
+        self.assertIs(self.t4.status, 'unrelated')
 
-    def test_reservation_get_paid_amount(self):
-        self.assertEqual(self.res.get_paid_amount(), 0)
-        self.res.transactions.append(self.t1)
-        self.assertEqual(self.res.get_paid_amount(), 402)
-        self.res.transactions.append(self.t2)
-        self.assertEqual(self.res.get_paid_amount(), 801)
+    def test_check_reservation_finalize(self):
+        self.res.status = 'open'
+        self.t1.reservation = self.res
+        checker.check_payment_reservation(self.db, self.res)
+        self.assertIs(self.res.status, 'finalized')
 
-    def test_reservation_reconstructor(self):
-        res = Mapper.Reservation(res_id=1000)
-        res.concert = self.concert
+    def test_check_reservation_too_little(self):
+        self.res.status = 'open'
+        self.t2.reservation = self.res
+        checker.check_payment_reservation(self.db, self.res)
+        self.assertIs(self.res.status, 'disputed')
 
-        self.assertIsNone(res.payment_reference)
-        res.reconstructor() # would be called when commit usually
-        self.assertEqual(res.payment_reference, "e3cbba8883")
+    def test_check_reservation_too_much(self):
+        self.res.status = 'open'
+        self.t2.reservation = self.res
+        checker.check_payment_reservation(self.db, self.res)
+        self.assertIs(self.res.status, 'finalized')
+        self.assertIs(self.t2.status, 'disputed')
 
+    def test_check_overdue_reservation_remind(self):
+        self.res.status = 'open'
+        self.res.date_reservation_created = self.res.date_reservation_created - datetime.timedelta(days=5)
+        checker.check_payment_reservation(self.db, self.res)
+        self.assertIs(self.res.status, 'open_reminded')
 
-HOST = 'localhost'
+    def test_check_overdue_reservation_cancel(self):
+        self.res.status = 'open_reminded'
+        self.res.date_reservation_created = self.res.date_reservation_created - datetime.timedelta(days=11)
+        checker.check_payment_reservation(self.db, self.res)
+        self.assertIs(self.res.status, 'canceled')
 
+    def test_check_reservation_canceled_then_paid(self):
+        self.res.status = 'canceled'
+        self.t1.reservation = self.res
+        checker.check_payment_reservation(self.db, self.res)
+        self.assertIs(self.res.status, 'canceled')
+        self.assertIs(self.t1.status, 'disputed')
 
 
 if __name__ == '__main__':
     # datum = 13.05.2022
     unittest.main()
-
-PORT = 5432

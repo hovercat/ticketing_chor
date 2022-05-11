@@ -141,11 +141,34 @@ def spot_and_assign_transactions(db: Mapper, transactions: Mapper.Transaction):
             t.status = 'unrelated'
 
 
-def check_reservation(db, res):
-    raise NotImplementedError
+def check_payment_reservation(db, res: Mapper.Reservation):
+    if res.status in ['open', 'open_reminded']:
+        # finalize if all correct
+        if res.get_paid_amount() == res.get_expected_amount():
+            # send_mail
+            res.status = 'finalized'
+            pass
+        # disputed if smaller than expected and TODO tell someone
+        elif res.get_paid_amount() < res.get_expected_amount():
+            # send_mail to person in charge
+            res.status = 'disputed'
+            pass
+        # finalized if paid is bigger than expected and TODO tell someone!
+        elif res.get_paid_amount() > res.get_expected_amount():
+            # send_mail
+            res.status = 'finalized'
+            pass
+
+    if res.status in ['canceled']:
+        if res.get_paid_amount() > 0:
+            # todo send mail to person in charge
+            pass
+
+def check_overdue_reservations(db, res):
+    # wat do here?
 
 
 def check_reservations(db: Mapper):
-    reservations = db.session.execute(sqlalchemy.sql.select(db.Reservation))
+    reservations = db.session.execute(sqlalchemy.sql.select(db.Reservation)) # TODO nur die open oder open_reminded sind?
     for r in reservations:
-        check_reservation(db, r)
+        check_payment_reservation(db, r)

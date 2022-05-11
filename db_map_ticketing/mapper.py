@@ -13,50 +13,6 @@ class Mapper:
     session = None
     mapper_registry = registry()
 
-    class Reservation_Status(enum.Enum):
-        open = 1
-        canceled = 2
-        finalized = 3
-        open_reminded = 4
-        disputed = 5
-
-    class Reservation_Payment_Status(enum.Enum):
-        none = 1
-        exact = 2
-        too_little = 3
-        too_much = 4
-        too_late = 5
-
-    payment_status_table = Table(
-        'payment_status',
-        mapper_registry.metadata,
-        Column('ps_id', Integer, primary_key=True, nullable=False),
-        Column('status', String)
-    )
-
-    class Payment_Status:
-        pass
-
-    reservation_status_table = Table(
-        'reservation_status',
-        mapper_registry.metadata,
-        Column('rs_id', Integer, primary_key=True, nullable=False),
-        Column('status', String)
-    )
-
-    class Reservation_Status:
-        pass
-
-    reservation_payment_status_table = Table(
-        'reservation_payment_status',
-        mapper_registry.metadata,
-        Column('rps_id', Integer, primary_key=True, nullable=False),
-        Column('status', String)
-    )
-
-    class Reservation_Payment_Status:
-        pass
-
     concert_table = Table(
         'concert',
         mapper_registry.metadata,
@@ -102,7 +58,7 @@ class Mapper:
 
         def get_expected_amount(self):  # TODO test
             return self.tickets_full_price * self.concert.full_price + \
-                   self.tickets_students_price * self.concert.student_price
+                   self.tickets_student_price * self.concert.student_price
 
         def get_paid_amount(self):  # TODO test
             return sum(payment.amount for payment in self.transactions)
@@ -126,16 +82,9 @@ class Mapper:
     class Transaction:
         pass
 
-    mapper_registry.map_imperatively(Payment_Status, payment_status_table)
-    mapper_registry.map_imperatively(Reservation_Status, reservation_status_table)
-    mapper_registry.map_imperatively(Reservation_Payment_Status, reservation_payment_status_table)
-    mapper_registry.map_imperatively(Transaction, transaction_table) #properties={
-    #    'payment_status': relationship(Payment_Status, backref='transactions')
-    #})
+    mapper_registry.map_imperatively(Transaction, transaction_table)
     mapper_registry.map_imperatively(Reservation, reservation_table, properties={
-        'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id)#,
-      #  'reservation_status': relationship(Reservation_Status, backref='reservations'),
-      #  'reservation_payment_status': relationship(Reservation_Payment_Status, backref='reservations')
+        'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id)
     })
     mapper_registry.map_imperatively(Concert, concert_table, properties={
         'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})

@@ -118,5 +118,6 @@ create table transaction
 alter table transaction
     owner to postgres;
 
-
+create unique index reservation_payment_status_rps_id_uindex
+    on reservation_payment_status (rps_id);
 
