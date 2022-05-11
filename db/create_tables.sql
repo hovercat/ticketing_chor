@@ -21,45 +21,6 @@ alter table concert
 create unique index concert_concert_id_uindex
     on concert (concert_id);
 
-create table reservation_status
-(
-    rs_id  integer not null
-        constraint reservation_status_pk
-            primary key,
-    status varchar
-);
-
-alter table reservation_status
-    owner to postgres;
-
-create unique index reservation_status_rs_id_uindex
-    on reservation_status (rs_id);
-
-create table payment_status
-(
-    ps_id  integer not null
-        constraint payment_status_pk
-            primary key,
-    status varchar
-);
-
-alter table payment_status
-    owner to postgres;
-
-create unique index payment_status_ps_id_uindex
-    on payment_status (ps_id);
-
-create table reservation_payment_status
-(
-    rps_id integer not null
-        constraint reservation_payment_status_pk
-            primary key,
-    status varchar
-);
-
-alter table reservation_payment_status
-    owner to postgres;
-
 create table reservation
 (
     res_id                   serial
@@ -76,12 +37,8 @@ create table reservation
     date_reservation_created date    default CURRENT_DATE,
     date_email_activated     date,
     date_reminded            date,
-    status                   integer
-        constraint reservation_reservation_status_rs_id_fk
-            references reservation_status,
-    pay_state                integer
-        constraint reservation_reservation_payment_status_rps_id_fk
-            references reservation_payment_status
+    status                   varchar,
+    pay_state                varchar
 );
 
 alter table reservation
@@ -102,14 +59,10 @@ create table transaction
         constraint transaction_reservation_res_id_fk
             references reservation,
     bank_transaction_id varchar,
-    status              integer
-        constraint transaction_payment_status_ps_id_fk
-            references payment_status
+    status              varchar
 );
 
 alter table transaction
     owner to postgres;
 
-create unique index reservation_payment_status_rps_id_uindex
-    on reservation_payment_status (rps_id);
 
