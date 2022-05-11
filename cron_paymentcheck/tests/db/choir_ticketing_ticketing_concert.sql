@@ -1,1 +1,0 @@
-INSERT INTO testing.concert (concert_id, date_sale_start, date_sale_end, date_concert, concert_title, concert_location, full_price, student_price, duration_reminder, duration_cancelation, tickets_available) VALUES (1, '2022-05-01', '2022-05-31', '2022-06-03', 'SOMMERKONZERT', 'Treitlstraße 3, 1040 Wien', 15, 5, 3, 7, 200);

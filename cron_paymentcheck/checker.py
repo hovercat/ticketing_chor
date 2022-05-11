@@ -92,14 +92,6 @@ def already_canceled_but_paid(db, reservation):
     pass
 
 
-def handle_reservations(db):
-    #  get all reservations not yet finalized
-    query = sqlalchemy.sql.select(db.Reservation).where(db.Reservation.status != Mapper.Reservation_Status.finalized)
-    query_result = db.session.execute(query)
-
-    for r in query_result:
-        #
-        pass
 
 
 def main(args):
@@ -145,7 +137,7 @@ def check_payment_reservation(db, res: Mapper.Reservation):
     if res.status in ['open', 'open_reminded']:
         # finalize if all correct
         if res.get_paid_amount() == res.get_expected_amount():
-            # send_mail
+            finalize_reservation()
             res.status = 'finalized'
             pass
         # disputed if smaller than expected and TODO tell someone
@@ -159,7 +151,7 @@ def check_payment_reservation(db, res: Mapper.Reservation):
             res.status = 'finalized'
             pass
 
-    if res.status in ['canceled']:
+    if res.status in ['canceled']: # todo status deleted machen irgendwo
         if res.get_paid_amount() > 0:
             # todo send mail to person in charge
             pass

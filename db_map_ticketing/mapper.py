@@ -1,5 +1,7 @@
 import enum
+from datetime import datetime
 
+import sqlalchemy.sql
 from sqlalchemy.orm import Session, registry, relationship
 import sqlalchemy as db
 from sqlalchemy import Column, String, Integer, Boolean, Date, Table, ForeignKey, Float, orm, Enum
@@ -7,6 +9,12 @@ import hashlib
 
 
 class Mapper:
+    def __init__(self, dbconnector):
+        self.engine = db.create_engine(dbconnector, connect_args={'options': '-csearch_path=ticketing'})  # schema name
+        self.connection = self.engine.connect()
+        self.metadata = db.MetaData()
+        self.session = Session(self.engine, autoflush=False)
+
     engine = None
     connection = None
     metadata = None
@@ -26,11 +34,25 @@ class Mapper:
         Column('date_concert', Date),
         Column('date_sale_start', Date),
         Column('date_sale_end', Date),
-        Column('tickets_available', Integer)
+        Column('total_tickets', Integer)
     )
 
     class Concert:
-        pass
+        def get_reserved_tickets(self):
+            return list(filter(lambda res: res.status in ['open', 'open_reminded', 'finalized', 'new', 'disputed'],
+                               self.reservations))
+
+        def get_reserved_tickets_amount(self):
+            return sum(res.tickets_full_price + res.tickets_student_price for res in self.get_reserved_tickets())
+
+        def get_sold_tickets(self):
+            return list(filter(lambda res: res.status in ['finalized'], self.reservations))
+
+        def get_sold_tickets_amount(self):
+            return sum(res.tickets_full_price + res.tickets_student_price for res in self.get_sold_tickets())
+
+        def get_available_tickets_amount(self):
+            return self.total_tickets - self.get_reserved_tickets_amount()
 
     reservation_table = Table(
         'reservation',
@@ -75,7 +97,7 @@ class Mapper:
         Column('debtor_name', String),
         Column('payment_date', Date),
         Column('bank_transaction_id', String),
-       # Column('status', Integer, ForeignKey('payment_status.ps_id'))
+        # Column('status', Integer, ForeignKey('payment_status.ps_id'))
         Column('status', String)
     )
 
@@ -89,8 +111,8 @@ class Mapper:
     mapper_registry.map_imperatively(Concert, concert_table, properties={
         'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
 
-    def __init__(self, dbconnector):
-        self.engine = db.create_engine(dbconnector, connect_args={'options': '-csearch_path=ticketing'})  # schema name
-        self.connection = self.engine.connect()
-        self.metadata = db.MetaData()
-        self.session = Session(self.engine, autoflush=False)
+    def get_concerts(self):
+        concert_query = sqlalchemy.sql.select(Mapper.Concert)\
+            .where(datetime.today() > Mapper.Concert.date_sale_start)\
+            .where(datetime.today() < Mapper.Concert.date_sale_end)
+        return [c for c, in self.session.execute(concert_query)]
