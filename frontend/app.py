@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for
 from ..mapper import Mapper
 from ..constants import *
 import json
@@ -9,6 +9,8 @@ db = Mapper(DB_URL)
 
 @app.route("/")
 def landing():
+    url_for('static', filename='style.css')
+    url_for('static', filename='js.js')
     return render_template("index.html",cards_left=5, concerts=db.get_concerts())
 
 @app.route("/reserved", methods=['GET', 'POST'])
