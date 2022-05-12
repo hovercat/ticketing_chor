@@ -14,19 +14,19 @@
         </span>
         <h1>Reservierungsformular</h2>
         <form method="POST" action="/reserved">
-            <select id="concertdate">
+            <select id="concertdate" name="concertdate">
                 {% for concert  in concerts %}
                     <option value="{{ concert.concert_id }}">{{ concert.date_concert }}</option>
                 {% endfor %}
             </select>
             <label for="concertdate">Konzerttag</label><br>
-            <input type="text" id="name">
+            <input type="text" id="name" name="name">
             <label for="name">Name</label><br>
             <input type="email" id="email" name="email">
             <label for="email">E-Mail Addresse</label><br>
-            <input type="number" max="10" min="0" id="poor_people_tickets">
+            <input type="number" max="10" min="0" name="poor_people_tickets" id="tickets_student">
             <label for="poor_people_tickets">Tickets Studentenpreis</label><br>
-            <input type="number" max="11" min="0" id="tickets_full">
+            <input type="number" max="11" min="0" id="tickets_full" name="tickets_full">
             <label for="tickets_full">Tickets Vollpreis</label><br>
             <input type="Submit" value="Reservierung Abschicken!">
         </form>

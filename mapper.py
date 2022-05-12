@@ -18,6 +18,7 @@ class Mapper:
         self.connection = self.engine.connect()
         self.metadata = db.MetaData()
         self.session = Session(self.engine, autoflush=False)
+        self.mailgod = Mailgod()
 
     engine = None
     connection = None
@@ -84,8 +85,6 @@ class Mapper:
     )
 
     class Reservation:
-        def __init__(self):
-            self.mailgod = Mailgod()
 
         @orm.reconstructor
         def reconstructor(self):
@@ -102,7 +101,7 @@ class Mapper:
             return sum(payment.amount for payment in self.transactions)
 
 
-        def reserve(self, mailgod: Mailgod):
+        def reserve(self):
             self.status = 'new'
             with open("email_templates/activate.html", 'r') as mail_template:
                 mail_template_text = ''.join(mail_template.readlines())
@@ -115,7 +114,7 @@ class Mapper:
                     concert_location=self.concert.concert_location,
                     payment_reference=self.payment_reference
                 )
-                mailgod.send_mail(
+                self.mailgod.send_mail(
                     [self.user_email],
                     _subject='Aktivierungslink | TU Wien Chor Reservierung',
                     _message=mail_msg

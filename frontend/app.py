@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 from ..mapper import Mapper
 from ..constants import *
 import json
+import datetime
+import time
 app = Flask(__name__)
 db = Mapper(DB_URL)
 
@@ -12,7 +14,20 @@ def landing():
 @app.route("/reserved", methods=['GET', 'POST'])
 def reserved():
     if request.method == 'POST': # Maybe just have one function for landing & confirmed page?
-        #TODO: IMplement doing the reservation
+        reservation = Mapper.Reservation(
+            user_email=request.form['email'],
+            user_name=request.form['name'],
+            tickets_full_price=int(request.form['tickets_full']), 
+            tickets_student_price=int(request.form['poor_people_tickets']),
+            date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            date_email_activated=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            status='new',
+            pay_state='none',
+            concert_id=int(request.form['concertdate'])
+        )
+        db.session.add(reservation)
+        db.session.commit()
+        reservation.reserve() #TODO: WTF is even this DB API ?? Need to commit the DB object and get its Id then get it from DB or something
         return render_template("confirm.html", email=request.form['email'])
     elif request.method == 'GET':
         return "Error"
