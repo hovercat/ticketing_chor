@@ -29,6 +29,7 @@ def reserved():
         )
         db.session.add(reservation)
         db.session.commit()
+        db.session.refresh(reservation)
         reservation.reserve() #TODO: WTF is even this DB API ?? Need to commit the DB object and get its Id then get it from DB or something
         return render_template("confirm.html", email=request.form['email'])
     elif request.method == 'GET':

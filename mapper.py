@@ -112,7 +112,7 @@ class Mapper:
                     tickets_full_price=self.tickets_full_price,
                     tickets_student_price=self.tickets_student_price,
                     concert_location=self.concert.concert_location,
-                    payment_reference=self.payment_reference
+                    payment_reference=self.get_payment_reference()
                 )
                 self.mailgod.send_mail(
                     [self.user_email],
