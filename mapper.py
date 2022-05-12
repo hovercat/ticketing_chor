@@ -8,12 +8,13 @@ import sqlalchemy as db
 from sqlalchemy import Column, String, Integer, Boolean, Date, Table, ForeignKey, Float, orm, Enum
 import hashlib
 
-from mailgod.Mailgod import Mailgod
+from .Mailgod import Mailgod
+from .constants import DB_OPTIONS
 
 
 class Mapper:
     def __init__(self, dbconnector):
-        self.engine = db.create_engine(dbconnector, connect_args={'options': '-csearch_path=ticketing'})  # schema name
+        self.engine = db.create_engine(dbconnector, connect_args={'options': DB_OPTIONS})  # schema name
         self.connection = self.engine.connect()
         self.metadata = db.MetaData()
         self.session = Session(self.engine, autoflush=False)

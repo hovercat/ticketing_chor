@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request
 from ..mapper import Mapper
+from ..constants import *
 import json
 app = Flask(__name__)
-SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
-db = Mapper(SQL_CONNECTOR)
+db = Mapper(DB_URL)
 
 @app.route("/")
 def landing():
@@ -21,14 +21,25 @@ def reserved():
 def confirm_reservation(reservation_hash):
     pass #implement activation logic
 
-@app.route("/queryseats/<id>", methods=['GET'])
+@app.route("/getseats/<id>", methods=['GET'])
 def getseats(id):
     try:
         id = int(id)
         concert = list(filter(lambda c: c.concert_id == id,db.get_concerts()))[0]
-        return str(concert.get_available_tickets_amount())
+        return json.dumps({'failed': False, 'seats':concert.get_available_tickets_amount()})
     except Exception as e:
-        return str(e)
+        return json.dumps({"failed":True, "details":str(e)})
+
+@app.route("/getprice/<id>")
+def getprice(id):
+    try:
+        id = int(id)
+        concert = list(filter(lambda c: c.concert_id == id,db.get_concerts()))[0]
+        return json.dumps({'failed': False, 'full':concert.full_price, 'student':concert.student_price})
+    except Exception as e:
+        return json.dumps({"failed":True, "details":str(e)})
+        
+
     
 
 @app.route("/confirm")
