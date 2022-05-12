@@ -7,7 +7,7 @@ db = Mapper(DB_URL)
 
 @app.route("/")
 def landing():
-    return render_template("index.html", cards_left=5, price_student=10, price_full=15, concerts=db.get_concerts())
+    return render_template("index.html",cards_left=5, concerts=db.get_concerts())
 
 @app.route("/reserved", methods=['GET', 'POST'])
 def reserved():

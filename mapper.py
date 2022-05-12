@@ -84,6 +84,8 @@ class Mapper:
     )
 
     class Reservation:
+        def __init__(self):
+            self.mailgod = Mailgod()
 
         @orm.reconstructor
         def reconstructor(self):
