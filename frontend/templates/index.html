@@ -1,7 +1,8 @@
 <!DOCTYPE html>
     <head>
         <title>Kartenreservierung TU Chor</title>
-        <!--- TODO add here some javascript that throws an error if total cards > cards available-->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <!-- I use jQuery because I'm *that* lazy-->
         <link rel="stylesheet" href="static/style.css" type="text/css">
         <script type="text/javascript" src="static/js.js"></script>
     </head>
@@ -12,8 +13,8 @@
         <span class="introtext">
             Aktuell sind noch {{ cards_left }} Karten zum Verkauf verfügbar!
             <ol>
-                <li>Studentenpreis: {{ concerts[0].full_price }}€</li>
-                <li>Erwachsenen und Kinderpreis: {{ concerts[0].student_price }}€</li>
+                <li>Studentenpreis: <span id="pl_student">{{ concerts[0].student_price }}</span>€</li>
+                <li >Erwachsenen und Kinderpreis: <span id="pl_full">{{ concerts[0].full_price }}</span>€</li>
             </ol>
         </span>
         </div>
@@ -30,11 +31,12 @@
             <label for="name">Name</label><br>
             <input type="email" id="email" name="email">
             <label for="email">E-Mail Addresse</label><br>
-            <input type="number" max="10" min="0" name="poor_people_tickets" id="tickets_student">
+            <input type="number" max="10" min="0" name="poor_people_tickets" id="tickets_student" class="ticket-amount" step="1">
             <label for="poor_people_tickets">Tickets Studentenpreis</label><br>
-            <input type="number" max="11" min="0" id="tickets_full" name="tickets_full">
+            <input type="number" max="11" min="0" id="tickets_full" name="tickets_full" class="ticket-amount" step="1">
             <label for="tickets_full">Tickets Vollpreis</label><br>
-            <input type="Submit" value="Reservierung Abschicken!">
+            <span>Gesamtpreis:<strong><span id="total">0</span></strong>€</span><br>
+            <input type="Submit" value="Reservierung Abschicken!" id="sendreservation">
         </form>
     </div>
     </div>
