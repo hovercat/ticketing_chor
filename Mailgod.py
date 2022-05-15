@@ -4,8 +4,8 @@ import ssl
 from email.header import Header
 from email.message import EmailMessage
 from email.utils import formataddr
-from .mail_secrets import *
-from .constants import *
+from mail_secrets import *
+from constants import *
 
 
 class Mailgod:
@@ -86,8 +86,7 @@ class Mailgod:
                     log.write('Connection closed.\n')
                     smtp.quit()
 
-
-from . import mail_secrets as ms
+import mail_secrets as ms
 
 if __name__ == '__main__':
     mailgod = Mailgod(ms.user, "asdf", ms.host, ms.port, ms.address_sender, ms.name_sender,

@@ -13,7 +13,7 @@ import checker
 from mapper import Mapper
 
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
-class CheckerTests(unittest.TestCase):
+class MapperTests(unittest.TestCase):
     def setUp(self) -> None:
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush

@@ -18,12 +18,12 @@ class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
         import mail_secrets as ms
         self.mailgod = Mailgod(
-            mail_usr=ms.user,
-            mail_pwd=ms.password,
-            mail_host=ms.host,
-            mail_port=ms.port,
-            _from_name=ms.name_sender,
-            _from=ms.address_sender,
+            mail_usr=ms.MAIL_USER,
+            mail_pwd=ms.MAIL_PASSWORD,
+            mail_host=ms.MAIL_HOST,
+            mail_port=ms.MAIL_PORT,
+            _from_name=ms.MAIL_NAME_SENDER,
+            _from=ms.MAIL_ADDRESS_SENDER,
             log_file='mail.log'
         )
 

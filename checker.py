@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 import sqlalchemy
@@ -141,18 +141,30 @@ def check_payment_reservation(mailgod: Mailgod, res: Mapper.Reservation):
             res.finalize(mailgod)
             pass
         # disputed if smaller than expected and TODO tell someone
-        elif res.get_paid_amount() < res.get_expected_amount():
+        elif 0 < res.get_paid_amount() < res.get_expected_amount():
             # send_mail to person in charge'
+            res.dispute('Paid too litte.', mailgod)
             pass
         # finalized if paid is bigger than expected and TODO tell someone!
         elif res.get_paid_amount() > res.get_expected_amount():
             # send_mail
+            res.dispute('Paid too much.', mailgod)
+            res.finalize(mailgod)
             pass
 
     if res.status in ['canceled']: # todo status deleted machen irgendwo
         if res.get_paid_amount() > 0:
             # todo send mail to person in charge
+            res.dispute('Payment received but is canceled!', mailgod, status='canceled')
             pass
+
+    if res.status in ['open']:
+        if (res.date_reservation_created + timedelta(days=res.concert.duration_reminder)) < datetime.now().date():
+            res.remind(mailgod)
+    if res.status in ['open_reminded']:
+        if (res.date_reservation_created + timedelta(days=res.concert.duration_cancelation)) < datetime.now().date():
+            res.cancel(mailgod)
+
 
 def check_overdue_reservations(db, res):
     # wat do here?

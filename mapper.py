@@ -8,8 +8,8 @@ import sqlalchemy as db
 from sqlalchemy import Column, String, Integer, Boolean, Date, Table, ForeignKey, Float, orm, Enum
 import hashlib
 
-from .Mailgod import Mailgod
-from .constants import DB_OPTIONS
+from Mailgod import Mailgod
+from constants import DB_OPTIONS
 
 
 class Mapper:
@@ -88,7 +88,7 @@ class Mapper:
 
         @orm.reconstructor
         def reconstructor(self):
-            self.payment_reference = self.get_payment_reference(self)
+            self.payment_reference = self.get_payment_reference()
 
         def get_payment_reference(self):
             return hashlib.sha1(str(self.res_id).encode()).hexdigest()[:10]

@@ -1,3 +1,8 @@
 secret_tokens.sh
 *.pyc
 mail_secrets.py
+constants.py
+.idea/
+ACCESS_TOKEN
+mail.log
+verkaufstool
