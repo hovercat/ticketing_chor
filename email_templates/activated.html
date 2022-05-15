@@ -1,25 +1,18 @@
-Sehr geehrte_r {user_name},
-
-Ihre Reservierung für unser Konzert am {concert_date} wurde aktiviert.
-
-Ihre Reservierung:
-Konzert: {concert_title}
-Datum: {concert_date}
-Ort: {concert_location}
-Anzahl Tickets (Vollpreis):{tickets_full_price} zu je €{concert_full_price}
-Anzahl Tickets (ermäßigt): {tickets_student_price} zu je €{concert_student_price}
-Status: offen
-
-Bitte überweisen Sie den Betrag von €{amount} bis {latest_date} mit dem Verwendungszweck {payment_reference} auf das Konto des TU Wien Chor.
-
-Überweisungsdaten:
-IBAN: AT78 1420 0200 1094 2560
-Verwendungszweck: {payment_reference}
-Betrag: €{amount}
-
-Die Kontodaten sind auch auf der Website des TU Wien Chors einsehbar.
-
-Klingende Grüße,
-TU Wien Chor
-
-— Automatisch generiertes Mail —
+<html>
+Sehr geehrte_r {user_name},<br>
+<br>
+Ihre Reservierung für unser Konzert am {concert_date} wurde bestätigt. <br>
+<br>
+Bitte überweisen Sie den Betrag von {total} bis {latest_payment_date} mit dem Verwendungszweck {payment_reference} an das Konto des TU Wien Chors.<br>
+<br>
+<b>Überweisungsdaten:</b><br>
+IBAN: <b>AT78 1420 0200 1094 2560</b><br>
+Verwendungszweck: <b>{payment_reference}</b><br>
+Betrag: <b>{total}</b><br>
+<br>
+<br>
+Klingende Grüße,<br>
+TU Wien Chor<br>
+<br>
+— Automatisch generiertes Mail — <br>
+</html>

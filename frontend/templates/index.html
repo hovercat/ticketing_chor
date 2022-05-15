@@ -1,43 +1,79 @@
 <!DOCTYPE html>
     <head>
-        <title>Kartenreservierung TU Chor</title>
+        <title>Kartenreservierung TU Wien Chor</title>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
         <!-- I use jQuery because I'm *that* lazy-->
         <link rel="stylesheet" href="static/style.css" type="text/css">
         <script type="text/javascript" src="static/js.js"></script>
+        <script type="text/javascript">
+            var pl_student={{ concerts[0].student_price }};
+            var pl_full={{ concerts[0].full_price }};
+        </script>
     </head>
     <body>
         <div class="main">
         <div class="content">
-        <h1>Herzlich willkommen zum Ticketverkaufstool</h1>
-        <span class="introtext">
-            Aktuell sind noch {{ cards_left }} Karten zum Verkauf verfügbar!
-            <ol>
-                <li>Studentenpreis: <span id="pl_student">{{ concerts[0].student_price }}</span>€</li>
-                <li >Erwachsenen und Kinderpreis: <span id="pl_full">{{ concerts[0].full_price }}</span>€</li>
-            </ol>
-        </span>
-        </div>
+            <h1>Kartenverkauf<img id="logo" src="static/tu_chor_final_blau.png" alt="Logo TU Wien Chor"></h1>
+            <div class="introtext">
+                Hier können Sie Karten für die Konzerte des TU Wien Chors beziehen. <br><br>
+                <div id="ermaessigungen">
+                    Ermäßigungen gelten für:
+                    <ul>
+                        <li>Alle bis 14 Jahren</li>
+                        <li>Studenten</li>
+                        <li>Wehr-/Zivildiener</li>
+                        <li>Lehrlinge</li>
+                        <li>Schüler</li>
+                    </ul>
+                    Kinder, die auf dem Schoß sitzen, benötigen kein eigenes Ticket.
+                </div>
+                <br>
+                Nach der Reservierung werden Sie per E-Mail aufgefordert die Reservierung zu bestätigen, anschließend erhalten Sie eine E-Mail mit IBAN, Zahlungsreferenz und Gesamtpreis. <br>
+                Wir freuen uns auf Ihr Kommen!
+            </div>
+            </div>
         <div class="content">
         <h1>Reservierungsformular</h1>
-        <form method="POST" action="/reserved">
+        <form method="POST" action="/reserve">
+            <label for="concertdate">Konzerttag</label>
             <select id="concertdate" name="concertdate">
                 {% for concert  in concerts %}
-                    <option value="{{ concert.concert_id }}">{{ concert.date_concert }}</option>
+                    <option value="{{ concert.concert_id }}">{{ concert.get_concert_date() }} um {{ concert.get_concert_time() }}: {{ concert.concert_location }}</option>
                 {% endfor %}
             </select>
-            <label for="concertdate">Konzerttag</label><br>
-            <input type="text" id="name" name="name">
-            <label for="name">Name</label><br>
-            <input type="email" id="email" name="email">
-            <label for="email">E-Mail Addresse</label><br>
-            <input type="number" max="10" min="0" name="poor_people_tickets" id="tickets_student" class="ticket-amount" step="1">
-            <label for="poor_people_tickets">Tickets Studentenpreis</label><br>
-            <input type="number" max="11" min="0" id="tickets_full" name="tickets_full" class="ticket-amount" step="1">
-            <label for="tickets_full">Tickets Vollpreis</label><br>
-            <span>Gesamtpreis:<strong><span id="total">0</span></strong>€</span><br>
-            <input type="Submit" value="Reservierung Abschicken!" id="sendreservation">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required="True">
+            <label for="email">E-Mail Addresse</label>
+            <input type="email" id="email" name="email" required="True">
+            <label for="tickets_student">Tickets ermäßigt* {{ concerts[0].get_student_price_eur() }}</label>
+            <input type="number" max="10" min="0" name="tickets_student" id="tickets_student" class="ticket-amount" step="1" value="0">
+            <label for="tickets_full">Tickets Vollpreis {{ concerts[0].get_full_price_eur() }}</label>
+            <input type="number" max="10" min="0" id="tickets_full" name="tickets_full" class="ticket-amount" step="1" value="0">
+            <span>Gesamtpreis: <strong><span id="total"> 0,00 €</span></strong></span>
+            <div id="dsgvodiv">
+                <label for="dsgvo">Ich nehme die <a href=#dse>Datenschutzerklärung</a> zur Kenntnis</label>
+                <input type="checkbox" id="dsgvo" name="dsgvo" required="True">
+            </div>
+            <input type="Submit" value="Reservieren!" id="sendreservation">
         </form>
+    </div>
+    <div class="content">
+        <div id="datenschutz">
+            <a id="dse"></a>
+            <h2>Datenschutzerklärung</h2>
+            Dem TU Wien Chor, Wiedner Hauptstraße 8-10/E136, 1040 Wien, ZVR-Zahl: 508889012,
+            E-Mail: chor@tuwien.ac.at, ist es ein wichtiges Anliegen, Ihre personenbezogenen Daten ausreichend
+            zu schützen. Wir beachten deshalb die anzuwendenden Rechtsvorschriften,
+            insbesondere die Datenschutzgrundverordnung (DSGVO) und das anzuwendende Datenschutzgesetz
+            in der geltenden Fassung (DSG) zum Schutz, rechtmäßigen Umgang und zur Geheimhaltung
+            personenbezogener Daten sowie zur Datensicherheit.<br><br>
+            Mit dem Absenden dieses Formulars speichern und verarbeiten wir Ihre eingegebenen
+            Daten (Name, E-Mail, Bankverbindung, Zahlbetrag) gemäß Art 6 Abs 1 DSGVO.<br>
+            Gemäß dieser Grundlage bleiben Ihre angegebenen Daten bis zur Stornierung der Reservierung,
+            oder bei abgeschlossenem Verkauf mindestens 7 Jahre zur Einhaltung vereins-,
+            und steuerrechtlicher Vorgaben gespeichert. Sie haben jederzeit das Recht Einsicht auf Ihre
+            Daten zu nehmen. Bitte kontaktieren Sie uns dazu per Mail unter chor at tuwien.ac.at
+        </div>
     </div>
     </div>
     </body>

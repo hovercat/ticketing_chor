@@ -3,6 +3,8 @@ import smtplib
 import ssl
 from email.header import Header
 from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.utils import formataddr
 from mail_secrets import *
 from constants import *
@@ -35,7 +37,7 @@ class Mailgod:
             log.write("{}\n".format(datetime.datetime.now().strftime('%d.%m.%Y, %H:%H:%S')))
 
             #  Setup mail message
-            msg = EmailMessage()
+            msg = MIMEMultipart()
             msg['Subject'] = _subject
             msg['To'] = ', '.join(_to)
             msg['Bcc'] = ', '.join(_bcc)
@@ -43,7 +45,8 @@ class Mailgod:
             msg['From'] = from_header
             if _respond_to is not None:
                 msg.add_header('reply-to', _respond_to)
-            msg.set_content(_message)
+            #msg.set_content(_message)
+            msg.attach(MIMEText(_message, "html"))
 
             #  Log mail
             log.writelines([
@@ -51,7 +54,8 @@ class Mailgod:
                 "\tReceivers: {}\n".format(msg['To']),
                 "\tBCC Receivers: {}\n".format(msg['Bcc']),
                 "\tFrom Header: {}\n".format(msg['From']),
-                "\tContent: {}\n".format(msg.get_content())
+                "\tSubject: {}\n".format(msg['Subject']),
+                "\tMSG: {}\n".format(_message)
             ])
 
             # Connect to mail host

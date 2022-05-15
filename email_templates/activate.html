@@ -1,18 +1,24 @@
-Sehr geehrte_r {user_name},
+<html>
+Sehr geehrte_r {user_name},<br>
+<br>
+Sie haben soeben eine Reservierung für unser Konzert am {concert_date} getätigt. <br>
+<br>
+Bitte bestätigen Sie Ihre Reservierung innerhalb von 24 Stunden, indem Sie den folgenden Link anklicken: <a href="https://tuwienchor.j&ouml;rre.at/confirm/{payment_reference}">Reservierung bestätigen</a> <br>
+Sie erhalten anschließend die Zahlungsanweisung per E-Mail.<br>
 
-Sie haben soeben eine Reservierung für unser Konzert am {concert_date} erstellt.
-
-Bitte bestätigen Sie Ihre Reservierung, indem Sie den folgenden Link anklicken: https://tuwienchor.jörre.at/activate/{payment_reference}
-Wir werden Ihnen anschließend unsere Zahlungsdaten zukommen lassen.
-
-Ihre Reservierung:
-Konzert: {concert_title}
-Datum: {concert_date}
-Ort: {concert_location}
-Anzahl Tickets (Vollpreis):{tickets_full_price} zu je €{concert_full_price}
-Anzahl Tickets (ermäßigt): {tickets_student_price} zu je €{concert_student_price}
-
-Klingende Grüße,
-TU Wien Chor
-
-— Automatisch generiertes Mail —
+<br>
+Ihre Angaben:<br>
+Konzert: {concert_title}<br>
+Datum: {concert_date}<br>
+Uhrzeit: {concert_time}<br>
+Ort: {concert_location}<br>
+Anzahl Tickets (vollpreis):{tickets_full_price} zu je {concert_full_price}<br>
+Anzahl Tickets (ermäßigt): {tickets_student_price} zu je {concert_student_price}<br>
+<span style='font-weight: bold'>Betrag: {total}</span><br>
+<br>
+Klingende Grüße,<br>
+TU Wien Chor<br>
+<br>
+— Automatisch generiertes Mail — <br>
+Aktivierungslink: https://tuwienchor.j&ouml;rre.at/confirm/{payment_reference}
+</html>

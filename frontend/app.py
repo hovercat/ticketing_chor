@@ -11,16 +11,16 @@ db = Mapper(DB_URL)
 def landing():
     url_for('static', filename='style.css')
     url_for('static', filename='js.js')
-    return render_template("index.html",cards_left=5, concerts=db.get_concerts())
+    return render_template("index.html",tickets_left=5, concerts=db.get_concerts())
 
-@app.route("/reserved", methods=['GET', 'POST'])
-def reserved():
+@app.route("/reserve", methods=['GET', 'POST'])
+def reserve():
     if request.method == 'POST': # Maybe just have one function for landing & confirmed page?
         reservation = Mapper.Reservation(
             user_email=request.form['email'],
             user_name=request.form['name'],
             tickets_full_price=int(request.form['tickets_full']), 
-            tickets_student_price=int(request.form['poor_people_tickets']),
+            tickets_student_price=int(request.form['tickets_student']),
             date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             date_email_activated=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             status='new',
@@ -30,14 +30,27 @@ def reserved():
         db.session.add(reservation)
         db.session.commit()
         db.session.refresh(reservation)
-        reservation.reserve() #TODO: WTF is even this DB API ?? Need to commit the DB object and get its Id then get it from DB or something
+        reservation.set_payment_reference()
+        db.session.commit()
+        db.session.refresh(reservation)
+        reservation.reserve(db.mailgod) #TODO: WTF is even this DB API ?? Need to commit the DB object and get its Id then get it from DB or something
         return render_template("confirm.html", email=request.form['email'])
     elif request.method == 'GET':
         return "Error"
 
 @app.route("/confirm/<reservation_hash>")
 def confirm_reservation(reservation_hash):
-    pass #implement activation logic
+    reservation = db.get_reservation_by_payment_reference(reservation_hash)
+    if reservation is None:
+        return render_template("not_found.html")
+    else:
+        if reservation.status == 'new':
+            reservation.activate(db.mailgod)
+            db.session.commit()
+        return render_template("confirmed.html",
+                               total=reservation.get_expected_amount_eur(),
+                               latest_payment_date=reservation.get_latest_possible_payment_date(),
+                               payment_reference=reservation.payment_reference)
 
 @app.route("/getseats/<id>", methods=['GET'])
 def getseats(id):

@@ -158,6 +158,21 @@ class MapperTests(unittest.TestCase):
         self.concert.date_sale_end = datetime.datetime.today() - datetime.timedelta(hours=1)
         self.db.session.commit()
         self.assertListEqual(self.db.get_concerts(), [])
+        self.db.session.delete(self.concert)
+        self.db.session.commit()
+        self.assertListEqual(self.db.get_concerts(), [])
+
+    def test_get_reservation_by_payment_reference(self):
+        ref = self.res.payment_reference
+        _res = self.db.get_reservation_by_payment_reference(ref)
+        self.assertEqual(_res.payment_reference, self.res.payment_reference)
+        self.assertEqual(_res.res_id, self.res.res_id)
+        self.assertTrue(_res == self.res)
+
+        self.db.session.delete(_res)
+        self.db.session.commit()
+        _res = self.db.get_reservation_by_payment_reference(ref)
+        self.assertIsNone(_res)
 
 HOST = 'localhost'
 

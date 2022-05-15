@@ -18,6 +18,7 @@ function updateSeatsLeft() {
             console.log(data);
             if(!data.failed) {
                 seats_left = data.seats;
+                $('#tickets_left').val("asdf")
             }
         }
     });
@@ -38,7 +39,12 @@ function updateTotal() {
         $('#sendreservation').prop("disabled", true);
     }
 
-    var total = n_student*price_student+n_full*price_full;
-    $('#total').text(total);
+    //var total = n_student*price_student+n_full*price_full;
+    let eurDElocale = Intl.NumberFormat('de-DE',{
+        style: 'currency',
+        currency: 'EUR'
+    });
+    var total = n_student*pl_student + n_full*pl_full;
+    $('#total').text(eurDElocale.format(total));
 };
 

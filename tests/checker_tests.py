@@ -11,7 +11,7 @@ import checker
 from mailgod.Mailgod import Mailgod
 from mapper import Mapper
 
-SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
+#SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 
 
 class CheckerTests(unittest.TestCase):
