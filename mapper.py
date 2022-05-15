@@ -206,7 +206,7 @@ class Mapper:
                     concert_full_price=self.concert.full_price,
                     concert_student_price=self.concert.student_price,
                     latest_date=self.concert.get_latest_possible_payment_date(),
-                    amount=self.get_expected_amount(),
+                    total=self.get_expected_amount(),
                     payment_reference=self.payment_reference
                 )
                 mailgod.send_mail(
