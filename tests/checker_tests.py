@@ -1,30 +1,24 @@
 import datetime
 
 import sqlalchemy
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, close_all_sessions
 import sqlalchemy as db
 from psycopg2 import connect, sql
 
 import unittest
 
-import checker
-from mailgod.Mailgod import Mailgod
+from checker import Checker
+MAIL_TEST = True
+from Mailgod import Mailgod
 from mapper import Mapper
+from api_secrets import *
 
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
         import mail_secrets as ms
-        self.mailgod = Mailgod(
-            mail_usr=ms.MAIL_USER,
-            mail_pwd=ms.MAIL_PASSWORD,
-            mail_host=ms.MAIL_HOST,
-            mail_port=ms.MAIL_PORT,
-            _from_name=ms.MAIL_NAME_SENDER,
-            _from=ms.MAIL_ADDRESS_SENDER,
-            log_file='mail.log'
-        )
 
+        close_all_sessions()
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush
 
@@ -94,56 +88,156 @@ class CheckerTests(unittest.TestCase):
         self.db.session.add(self.concert)
         self.db.session.commit()
 
+        self.checker = Checker(ng_id=SECRET_ID, ng_key=SECRET_KEY, ng_refresh_token=REFRESH_TOKEN, ng_account=ACCOUNT_TOKEN, db_connector=SQL_CONNECTOR, log_file_path="checker_tests.log")
+
     def tearDown(self) -> None:
+        close_all_sessions()
         with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
-        self.db.session.rollback()
-        self.db.session.close()
+        #self.db.session.commit()
 
-    def test_spot_and_assign_transactions(self):
-        checker.spot_and_assign_transactions(self.db, [self.t1, self.t4])
-        self.assertIs(self.t1.status, 'valid')
-        self.assertIs(self.t4.status, 'unrelated')
+
+    def test_add_transaction_to_db(self):
+        nordigen_transactions = {
+                                    "transactions":{
+                                        "booked":[
+                                            {"additionalInformation":"address: HOME1",
+                                             "bookingDate":"2022-05-11",
+                                             "debtorAccount":{"iban":"AT29292"},
+                                             "debtorName":"Hubert Mörtenhuber",
+                                             "remittanceInformationStructured":"unrelated",
+                                             "transactionAmount":{"amount":"2.50","currency":"EUR"},
+                                             "transactionId":"12312312",
+                                             "valueDate":"2022-05-11"},
+                                            {"additionalInformation":"address: HOME2",
+                                             "bookingDate":"2022-05-11",
+                                             "debtorAccount":{"iban":"AT2929234"},
+                                             "debtorName":"Simon Mustermensch",
+                                             "remittanceInformationStructured":self.res.payment_reference,
+                                             "transactionAmount":{"amount":self.res.get_expected_amount(),"currency":"EUR"},
+                                             "transactionId":"8",
+                                             "valueDate":"2022-05-11"}
+                                        ],"pending":[]}}
+        ts = self.checker.add_transactions_to_db(nordigen_transactions)
+        self.assertEqual(ts[0].status, 'invalid')
+        self.assertEqual(ts[1].status, 'valid')
+        ts2 = self.checker.add_transactions_to_db(nordigen_transactions)
+        self.assertListEqual(ts2, [])
 
     def test_check_reservation_finalize(self):
         self.res.status = 'open'
-        self.t1.reservation = self.res
-        checker.check_payment_reservation(self.mailgod, self.res)
-        self.assertIs(self.res.status, 'finalized')
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertEqual(f_res, [])
 
-    def test_check_reservation_too_little(self):
+        self.res.status = 'open_reminded'
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertEqual(f_res, [])
+
+        self.res.status = 'new_seen'
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertEqual(f_res, [])
+
+        self.res.transactions.append(self.t1)
         self.res.status = 'open'
-        self.t2.reservation = self.res
-        checker.check_payment_reservation(self.mailgod, self.res)
-        self.assertIs(self.res.status, 'disputed')
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertNotEqual(f_res, [])
+        self.assertEqual(f_res[0].res_id, self.res.res_id)
 
-    def test_check_reservation_too_much(self):
+        self.res.status = 'open_reminded'
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertNotEqual(f_res, [])
+        self.assertEqual(f_res[0].res_id, self.res.res_id)
+
+        self.res.status = 'new_seen'
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertNotEqual(f_res, [])
+        self.assertEqual(f_res[0].res_id, self.res.res_id)
+
+        self.res.status = 'canceled'
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertEqual(f_res, [])
+
         self.res.status = 'open'
-        self.t4.reservation = self.res
-        self.t2.reservation = self.res
-        checker.check_payment_reservation(self.mailgod, self.res)
-        self.assertIs(self.res.status, 'finalized')
+        self.res.transactions = []
+        self.res.transactions.append(self.t2) # not enough
+        self.db.session.commit()
+        f_res = self.checker.finalize_reservations()
+        self.assertNotEqual(f_res, [])
+        self.assertEqual(f_res[0].status, 'disputed')
 
-    def test_check_overdue_reservation_remind(self):
+
+    def test_remind_reservations(self):
         self.res.status = 'open'
         self.res.date_reservation_created = self.res.date_reservation_created - datetime.timedelta(days=5)
-        checker.check_payment_reservation(self.mailgod, self.res)
-        self.assertIs(self.res.status, 'open_reminded')
+        self.db.session.commit()
 
-    def test_check_overdue_reservation_cancel(self):
+        self.checker.remind_reservations()
+        self.db.session.refresh(self.res)
+        self.assertEqual(self.res.status, 'open_reminded')
+
+    def test_close_old_unpaid_reservations(self):
         self.res.status = 'open_reminded'
-        self.res.date_reservation_created = self.res.date_reservation_created - datetime.timedelta(days=11)
-        checker.check_payment_reservation(self.mailgod, self.res)
-        self.assertIs(self.res.status, 'canceled')
+        self.res.date_reservation_created = self.res.date_reservation_created - datetime.timedelta(days=self.res.concert.duration_cancelation+1)
+        self.db.session.commit()
 
-    def test_check_reservation_canceled_then_paid(self):
+        self.checker.close_old_unpaid_reservations()
+        self.db.session.refresh(self.res)
+        self.assertEqual(self.res.status, 'canceled')
+
+    def test_check_payment_of_canceled_res(self):
         self.res.status = 'canceled'
         self.t1.reservation = self.res
-        checker.check_payment_reservation(self.mailgod, self.res)
-        self.assertIs(self.res.status, 'canceled')
-        #self.assertIs(self.t1.status, 'disputed')
+        self.db.session.commit()
+
+        self.checker.check_payment_of_canceled_res()
+        self.db.session.refresh(self.res)
+        self.assertEqual(self.res.status, 'canceled')
+
+
+    def test_close_unconfirmed_reservations(self):
+        self.res.status = 'new_seen'
+        self.db.session.commit()
+
+        self.checker.close_unconfirmed_reservations()
+        self.assertEqual(self.res.status, 'new_seen')
+
+        self.res.status = 'new_seen'
+        self.res.date_reservation_created = self.res.date_reservation_created - datetime.timedelta(hours=25)
+        self.db.session.commit()
+        self.checker.close_unconfirmed_reservations()
+        self.db.session.refresh(self.res)
+        self.assertEqual(self.res.status, 'canceled')
+
+    def test_sight_new_reservations(self):
+        self.res.status = 'new'
+        self.db.session.commit()
+
+        self.checker.sight_new_reservations()
+        self.assertEqual(self.res.status, 'new_seen')
+
+        r = self.checker.sight_new_reservations()
+        self.assertEqual(r, [])
+
+    def test_set_activated_reservations_to_open(self):
+        self.res.status = 'new'
+        self.db.session.commit()
+        self.checker.set_activated_reservations_to_open()
+        self.assertEqual(self.res.status, 'new')
+
+        self.res.status = 'activated'
+        self.db.session.commit()
+        self.checker.set_activated_reservations_to_open()
+        self.db.session.refresh(self.res)
+        self.assertEqual('open', self.res.status)
 
 
 if __name__ == '__main__':

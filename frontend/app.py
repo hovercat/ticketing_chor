@@ -44,7 +44,7 @@ def confirm_reservation(reservation_hash):
     if reservation is None:
         return render_template("not_found.html")
     else:
-        if reservation.status == 'new':
+        if reservation.status == 'new' or reservation.status == 'new_seen':
             reservation.activate(db.mailgod)
             db.session.commit()
         return render_template("confirmed.html",

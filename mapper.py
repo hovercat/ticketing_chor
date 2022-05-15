@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import sqlalchemy.sql
 from flask import render_template
-from sqlalchemy.orm import Session, registry, relationship
+from sqlalchemy.orm import Session, registry, relationship, sessionmaker
 import sqlalchemy as db
 from sqlalchemy import Column, String, Integer, Boolean, Date, Table, ForeignKey, Float, orm, Enum
 import hashlib
@@ -20,6 +20,7 @@ locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # TODO boese hier
 class Mapper:
     def __init__(self, dbconnector):
         self.engine = db.create_engine(dbconnector, connect_args={'options': DB_OPTIONS})  # schema name
+        self.session_factory = sessionmaker(self.engine)
         self.connection = self.engine.connect()
         self.metadata = db.MetaData()
         self.session = Session(self.engine, autoflush=False)
@@ -149,14 +150,21 @@ class Mapper:
                     _message=mail_msg
                 )
 
-        def activate(self, mailgod: Mailgod):
+        def sight_new_res(self):
+            self.status = 'new_seen'
+
+        def set_to_open(self):
             self.status = 'open'
+
+        def activate(self, mailgod: Mailgod):
+            self.status = 'activated'
             with open("email_templates/activated.html", 'r') as mail_template:
                 mail_template_text = ''.join(mail_template.readlines())
                 mail_msg = mail_template_text.format(
                     user_name=self.user_name,
                     concert_title=self.concert.concert_title,
                     concert_date=self.concert.get_concert_date(),
+                    concert_time=self.concert.get_concert_time(),
                     tickets_full_price=self.tickets_full_price,
                     tickets_student_price=self.tickets_student_price,
                     concert_location=self.concert.concert_location,
@@ -179,6 +187,7 @@ class Mapper:
                     user_name=self.user_name,
                     concert_title=self.concert.concert_title,
                     concert_date=self.concert.get_concert_date(),
+                    concert_time=self.concert.get_concert_time(),
                     tickets_full_price=self.tickets_full_price,
                     tickets_student_price=self.tickets_student_price,
                     concert_full_price=self.concert.full_price,
@@ -200,6 +209,7 @@ class Mapper:
                     user_name=self.user_name,
                     concert_title=self.concert.concert_title,
                     concert_date=self.concert.get_concert_date(),
+                    concert_time=self.concert.get_concert_time(),
                     tickets_full_price=self.tickets_full_price,
                     tickets_student_price=self.tickets_student_price,
                     concert_location=self.concert.concert_location,
@@ -224,6 +234,30 @@ class Mapper:
                     user_name=self.user_name,
                     concert_title=self.concert.concert_title,
                     concert_date=self.concert.get_concert_date(),
+                    concert_time=self.concert.get_concert_time(),
+                    tickets_full_price=self.tickets_full_price,
+                    tickets_student_price=self.tickets_student_price,
+                    concert_location=self.concert.concert_location,
+                    concert_full_price=self.concert.full_price,
+                    concert_student_price=self.concert.student_price,
+                    latest_date=self.concert.get_latest_possible_payment_date(),
+                    reservation_date=self.date_reservation_created  # TODO MAKE BEATIFUL
+                )
+                mailgod.send_mail(
+                    [self.user_email],
+                    _subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(
+                        date=self.get_reservation_date()),
+                    _message=mail_msg
+                )
+        def cancel_24h(self, mailgod: Mailgod):
+            self.status = 'canceled'
+            with open("email_templates/cancelation_24h.html", 'r') as mail_template:
+                mail_template_text = ''.join(mail_template.readlines())
+                mail_msg = mail_template_text.format(
+                    user_name=self.user_name,
+                    concert_title=self.concert.concert_title,
+                    concert_date=self.concert.get_concert_date(),
+                    concert_time=self.concert.get_concert_time(),
                     tickets_full_price=self.tickets_full_price,
                     tickets_student_price=self.tickets_student_price,
                     concert_location=self.concert.concert_location,
@@ -239,12 +273,32 @@ class Mapper:
                     _message=mail_msg
                 )
 
-        def dispute(self, msg: str, mailgod: Mailgod, status='disputed'):
-            self.status = status
 
-            # TODO send mail to person in charge.
-            # OOOOR put into csv
-            pass
+
+        def dispute(self, msg: str, mailgod: Mailgod = None, status='disputed'):
+            self.status = status
+            if mailgod is not None and len(mailgod.mail_sale_managers) > 0:
+                mailgod.send_mail(
+                    mailgod.mail_sale_managers,
+                    _subject='Disputed Reservation',
+                    _message=msg
+                )
+
+        def to_csv(self, sep=' ', header=False):
+            return sep.join(
+                self.res_id,
+                self.payment_reference,
+                self.get_expected_amount(),
+                self.get_paid_amount(),
+                self.concert_id,
+                self.user_email,
+                self.user_name,
+                self.tickets_full_price,
+                self.tickets_student_price,
+                self.get_reservation_date(),
+                self.get_latest_possible_payment_date(),
+                self.status
+            )
 
     transaction_table = Table(
         'transaction',

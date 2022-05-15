@@ -106,13 +106,13 @@ class MapperTests(unittest.TestCase):
         self.res.transactions.append(self.t2)
         self.assertEqual(self.res.get_paid_amount(), 801)
 
-    def test_reservation_reconstructor(self):
-        res = Mapper.Reservation(res_id=1000)
-        res.concert = self.concert
-
-        self.assertIsNone(res.payment_reference)
-        res.reconstructor() # would be called when commit usually
-        self.assertEqual(res.payment_reference, "e3cbba8883")
+    # def test_reservation_reconstructor(self):
+    #     res = Mapper.Reservation(res_id=1000)
+    #     res.concert = self.concert
+    #
+    #     self.assertIsNone(res.payment_reference)
+    #     res.reconstructor() # would be called when commit usually
+    #     self.assertEqual(res.payment_reference, "e3cbba8883")
 
     def test_get_reserved_tickets(self):
         self.res.status = 'open'

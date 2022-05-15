@@ -21,6 +21,8 @@ class Mailgod:
     _from: str
     _from_name: str
 
+    test: bool
+
     def __init__(self):
         self.mail_usr = MAIL_USER
         self.mail_pwd = MAIL_PASSWORD
@@ -29,6 +31,8 @@ class Mailgod:
         self._from = MAIL_ADDRESS_SENDER
         self._from_name = MAIL_NAME_SENDER
         self.log_file = MAIL_LOG_FILE
+        self.mail_sale_managers = MAIL_SALE_MANAGERS
+        self.test = MAIL_TEST
 
     def send_mail(self, _to: list, _subject: str, _message: str, _bcc: list = [], _respond_to: str = None) -> None:
         with open(self.log_file, 'a') as log:
@@ -45,7 +49,7 @@ class Mailgod:
             msg['From'] = from_header
             if _respond_to is not None:
                 msg.add_header('reply-to', _respond_to)
-            #msg.set_content(_message)
+            # msg.set_content(_message)
             msg.attach(MIMEText(_message, "html"))
 
             #  Log mail
@@ -70,8 +74,11 @@ class Mailgod:
                     log.write('[success]\n')
 
                     log.write('Attempting to send emails ')
-                    smtp.sendmail(self._from, [*_to, *_bcc], msg.as_string())
-                    log.write('[success]\n')
+                    if not self.test:
+                        smtp.sendmail(self._from, [*_to, *_bcc], msg.as_string())
+                        log.write('[success]\n')
+                    else:
+                        log.write('[was just a test]\n')
 
                 except smtplib.SMTPAuthenticationError as e:
                     log.write('[authentication failure]\n')
@@ -90,9 +97,3 @@ class Mailgod:
                     log.write('Connection closed.\n')
                     smtp.quit()
 
-import mail_secrets as ms
-
-if __name__ == '__main__':
-    mailgod = Mailgod(ms.user, "asdf", ms.host, ms.port, ms.address_sender, ms.name_sender,
-                      '/home/ulrichaschl/mails.log')
-    mailgod.send_mail(['ulrich.aschl@gmail.cdfom'], 'TODWICHTIG', 'eine_nachricht')
