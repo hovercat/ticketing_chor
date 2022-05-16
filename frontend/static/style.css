@@ -10,7 +10,7 @@ h1 {
     margin:5px;
 }
 h2 {
-    font-size: 6vw;
+    font-size: 4vw;
 }
 
 body {
@@ -25,6 +25,10 @@ body {
 	margin: 0 auto !important;
 	float: none !important;
     padding: 10px;
+}
+
+#datenschutz {
+    font-size: 2vw;
 }
 
 
@@ -46,6 +50,9 @@ body {
     }
     body {
         font-size: 14pt;
+    }
+    #datenschutz {
+        font-size: 11px;
     }
 }
 
