@@ -1,8 +1,11 @@
-SET search_path TO ticketing;
+DROP database choir_ticketing;
+DROP SCHEMA ticketing CASCADE;
+COMMIT;
 
-drop table if exists transaction;
-drop table if exists reservation;
-drop table if exists concert;
+CREATE database choir_ticketing;
+CREATE SCHEMA ticketing;
+
+SET search_path TO ticketing,public;
 
 create table concert
 (
