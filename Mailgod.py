@@ -2,11 +2,9 @@ import datetime
 import smtplib
 import ssl
 from email.header import Header
-from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
-from mail_secrets import *
 from constants import *
 
 
@@ -15,24 +13,22 @@ class Mailgod:
     mail_pwd: str
     mail_host: str
     mail_port: str
-
     log_file: str
-
+    mail_sales_managers: []
+    mail_off: bool
     _from: str
     _from_name: str
 
-    test: bool
-
-    def __init__(self):
-        self.mail_usr = MAIL_USER
-        self.mail_pwd = MAIL_PASSWORD
-        self.mail_host = MAIL_HOST
-        self.mail_port = MAIL_PORT
-        self._from = MAIL_ADDRESS_SENDER
+    def __init__(self): # TODO irgendwann umstellen sodass parameter uebergeben werden, OOOOODER dass das überhaupt kein objekt mehr ist
+        self.mail_usr = MAIL_SECRETS['MAIL_USER']
+        self.mail_pwd = MAIL_SECRETS['MAIL_PASSWORD']
+        self.mail_host = MAIL_SECRETS['MAIL_HOST']
+        self.mail_port = MAIL_SECRETS['MAIL_PORT']
+        self._from = MAIL_SECRETS['MAIL_ADDRESS_SENDER']
         self._from_name = MAIL_NAME_SENDER
         self.log_file = MAIL_LOG_FILE
         self.mail_sale_managers = MAIL_SALE_MANAGERS
-        self.test = MAIL_TEST
+        self.mail_off = MAILS_OFF
 
     def send_mail(self, _to: list, _subject: str, _message: str, _bcc: list = [], _respond_to: str = None) -> None:
         with open(self.log_file, 'a') as log:
@@ -74,7 +70,7 @@ class Mailgod:
                     log.write('[success]\n')
 
                     log.write('Attempting to send emails ')
-                    if not self.test:
+                    if not self.mail_off:
                         smtp.sendmail(self._from, [*_to, *_bcc], msg.as_string())
                         log.write('[success]\n')
                     else:

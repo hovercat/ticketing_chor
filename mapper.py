@@ -1,20 +1,17 @@
-import enum
 from datetime import datetime, timedelta
 
 import sqlalchemy.sql
-from flask import render_template
 from sqlalchemy.orm import Session, registry, relationship, sessionmaker
 import sqlalchemy as db
-from sqlalchemy import Column, String, Integer, Boolean, Date, Table, ForeignKey, Float, orm, Enum
+from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float
 import hashlib
 
 from Mailgod import Mailgod
 from constants import DB_OPTIONS
 import locale
 
-# locale.setlocale(locale.LC_ALL, 'en_US')
-# locale.setlocale(locale.LC_ALL, 'de_DE')  # TODO boese hier
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # TODO boese hier
+mailgod = Mailgod()
 
 
 class Mapper:
@@ -24,7 +21,6 @@ class Mapper:
         self.connection = self.engine.connect()
         self.metadata = db.MetaData()
         self.session = Session(self.engine, autoflush=False)
-        self.mailgod = Mailgod()
 
     engine = None
     connection = None
@@ -124,31 +120,50 @@ class Mapper:
             return self.date_reservation_created.strftime('%d.%m.%Y')
 
         def get_latest_possible_payment_date(self):
-            return (self.date_reservation_created + timedelta(days=self.concert.duration_cancelation)).strftime('%d.%m.%Y')
+            return (self.date_reservation_created + timedelta(days=self.concert.duration_cancelation)).strftime(
+                '%d.%m.%Y')
 
-        def reserve(self, mailgod):
+        def send_mail(self, message, subject, receivers):
+            mailgod.send_mail(
+                receivers,
+                _message=message,
+                _subject=subject
+            )
+
+        def send_mail_user(self, mail_template_path, subject, extra_msg = None):
+            with open(mail_template_path, 'r') as f:
+                mail_template = ''.join(f.readlines())
+
+            mail_msg = mail_template.format(
+                user_name=self.user_name,
+                concert_title=self.concert.concert_title,
+                concert_date=self.concert.get_concert_date(),
+                concert_time=self.concert.get_concert_time(),
+                concert_location=self.concert.concert_location,
+                tickets_full_price=self.tickets_full_price,
+                tickets_student_price=self.tickets_student_price,
+                concert_full_price=self.concert.get_full_price_eur(),
+                concert_student_price=self.concert.get_student_price_eur(),
+                latest_date=self.concert.get_latest_possible_payment_date(),
+                reservation_date=self.get_reservation_date(),  # TODO MAKE BEATIFUL
+                payment_reference=self.get_payment_reference(),
+                total=self.get_expected_amount_eur()
+            )
+            self.send_mail(mail_msg, subject, [self.user_email])
+
+            if extra_msg:
+                self.send_mail_managers(extra_msg, extra_msg)
+
+
+        def send_mail_managers(self, message, subject):
+            self.send_mail(message, subject, mailgod.mail_sale_managers)
+
+        def reserve(self):
             self.status = 'new'
-            with open("email_templates/activate.html", 'r') as mail_template:
-                mail_template_text = ''.join(mail_template.readlines())
-                mail_msg = mail_template_text.format(
-                    user_name=self.user_name,
-                    concert_title=self.concert.concert_title,
-                    concert_date=self.concert.get_concert_date(),
-                    concert_time=self.concert.get_concert_time(),
-                    concert_location=self.concert.concert_location,
-                    tickets_full_price=self.tickets_full_price,
-                    tickets_student_price=self.tickets_student_price,
-                    concert_full_price=self.concert.get_full_price_eur(),
-                    concert_student_price=self.concert.get_student_price_eur(),
-                    payment_reference=self.get_payment_reference(),
-                    total=self.get_expected_amount_eur()
-                )
-                mailgod.send_mail(
-                    [self.user_email],
-                    _subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bitte bestätigen'.format(
-                        date=self.get_reservation_date()),
-                    _message=mail_msg
-                )
+            self.send_mail_user(
+                "email_templates/activate.html",
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bitte bestätigen'.format(date=self.get_reservation_date())
+            )
 
         def sight_new_res(self):
             self.status = 'new_seen'
@@ -156,128 +171,45 @@ class Mapper:
         def set_to_open(self):
             self.status = 'open'
 
-        def activate(self, mailgod: Mailgod):
+        def activate(self):
             self.status = 'activated'
-            with open("email_templates/activated.html", 'r') as mail_template:
-                mail_template_text = ''.join(mail_template.readlines())
-                mail_msg = mail_template_text.format(
-                    user_name=self.user_name,
-                    concert_title=self.concert.concert_title,
-                    concert_date=self.concert.get_concert_date(),
-                    concert_time=self.concert.get_concert_time(),
-                    tickets_full_price=self.tickets_full_price,
-                    tickets_student_price=self.tickets_student_price,
-                    concert_location=self.concert.concert_location,
-                    latest_payment_date=self.concert.get_latest_possible_payment_date(),
-                    total=self.get_expected_amount_eur(),
-                    payment_reference=self.payment_reference
-                )
-                mailgod.send_mail(
-                    [self.user_email],
-                    _subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(
-                        date=self.get_reservation_date()),
-                    _message=mail_msg
-                )
+            self.send_mail_user(
+                "email_templates/activated.html",
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date())
+            )
 
-        def finalize(self, mailgod: Mailgod):
+        def finalize(self, extra_msg =''):
             self.status = 'finalized'
-            with open("email_templates/finalize.html", 'r') as mail_template:
-                mail_template_text = ''.join(mail_template.readlines())
-                mail_msg = mail_template_text.format(
-                    user_name=self.user_name,
-                    concert_title=self.concert.concert_title,
-                    concert_date=self.concert.get_concert_date(),
-                    concert_time=self.concert.get_concert_time(),
-                    tickets_full_price=self.tickets_full_price,
-                    tickets_student_price=self.tickets_student_price,
-                    concert_full_price=self.concert.full_price,
-                    concert_student_price=self.concert.student_price,
-                    concert_location=self.concert.concert_location
-                )
-                mailgod.send_mail(
-                    [self.user_email],
-                    _subject='Ihre Buchung TU Wien Chor Konzert am {date} - Zahlung erfolgt'.format(
-                        date=self.get_reservation_date()),
-                    _message=mail_msg
-                )
+            self.send_mail_user(
+                "email_templates/finalize.html",
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Zahlung erfolgt'.format(date=self.get_reservation_date()),
+                extra_msg = extra_msg
+            )
 
-        def remind(self, mailgod: Mailgod):
+        def remind(self):
             self.status = 'open_reminded'
-            with open("email_templates/reminder.html", 'r') as mail_template:
-                mail_template_text = ''.join(mail_template.readlines())
-                mail_msg = mail_template_text.format(
-                    user_name=self.user_name,
-                    concert_title=self.concert.concert_title,
-                    concert_date=self.concert.get_concert_date(),
-                    concert_time=self.concert.get_concert_time(),
-                    tickets_full_price=self.tickets_full_price,
-                    tickets_student_price=self.tickets_student_price,
-                    concert_location=self.concert.concert_location,
-                    concert_full_price=self.concert.full_price,
-                    concert_student_price=self.concert.student_price,
-                    latest_date=self.concert.get_latest_possible_payment_date(),
-                    total=self.get_expected_amount(),
-                    payment_reference=self.payment_reference
-                )
-                mailgod.send_mail(
-                    [self.user_email],
-                    _subject='Erinnerung: Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(
-                        date=self.get_reservation_date()),
-                    _message=mail_msg
-                )
+            self.send_mail_user(
+                "email_templates/reminder.html",
+                subject='Erinnerung: Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date())
+            )
 
-        def cancel(self, mailgod: Mailgod):
+        def cancel(self):
             self.status = 'canceled'
-            with open("email_templates/cancelation.html", 'r') as mail_template:
-                mail_template_text = ''.join(mail_template.readlines())
-                mail_msg = mail_template_text.format(
-                    user_name=self.user_name,
-                    concert_title=self.concert.concert_title,
-                    concert_date=self.concert.get_concert_date(),
-                    concert_time=self.concert.get_concert_time(),
-                    tickets_full_price=self.tickets_full_price,
-                    tickets_student_price=self.tickets_student_price,
-                    concert_location=self.concert.concert_location,
-                    concert_full_price=self.concert.full_price,
-                    concert_student_price=self.concert.student_price,
-                    latest_date=self.concert.get_latest_possible_payment_date(),
-                    reservation_date=self.date_reservation_created  # TODO MAKE BEATIFUL
-                )
-                mailgod.send_mail(
-                    [self.user_email],
-                    _subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(
-                        date=self.get_reservation_date()),
-                    _message=mail_msg
-                )
-        def cancel_24h(self, mailgod: Mailgod):
+            self.send_mail_user(
+                "email_templates/cancelation.html",
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date())
+            )
+
+        def cancel_24h(self):
             self.status = 'canceled'
-            with open("email_templates/cancelation_24h.html", 'r') as mail_template:
-                mail_template_text = ''.join(mail_template.readlines())
-                mail_msg = mail_template_text.format(
-                    user_name=self.user_name,
-                    concert_title=self.concert.concert_title,
-                    concert_date=self.concert.get_concert_date(),
-                    concert_time=self.concert.get_concert_time(),
-                    tickets_full_price=self.tickets_full_price,
-                    tickets_student_price=self.tickets_student_price,
-                    concert_location=self.concert.concert_location,
-                    concert_full_price=self.concert.full_price,
-                    concert_student_price=self.concert.student_price,
-                    latest_date=self.concert.get_latest_possible_payment_date(),
-                    reservation_date=self.date_reservation_created  # TODO MAKE BEATIFUL
-                )
-                mailgod.send_mail(
-                    [self.user_email],
-                    _subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(
-                        date=self.get_reservation_date()),
-                    _message=mail_msg
-                )
+            self.send_mail_user(
+                "email_templates/cancelation_24h.html",
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date())
+            )
 
-
-
-        def dispute(self, msg: str, mailgod: Mailgod = None, status='disputed'):
+        def dispute(self, msg: str, send_mail=False, status='disputed'):
             self.status = status
-            if mailgod is not None and len(mailgod.mail_sale_managers) > 0:
+            if send_mail and len(mailgod.mail_sale_managers) > 0:
                 mailgod.send_mail(
                     mailgod.mail_sale_managers,
                     _subject='Disputed Reservation',
@@ -319,12 +251,16 @@ class Mapper:
     class Transaction:
         pass
 
-    mapper_registry.map_imperatively(Transaction, transaction_table)
     mapper_registry.map_imperatively(Reservation, reservation_table, properties={
-        'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id)
+        'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id),
+        'concert': relationship(Concert, backref='reservations', order_by=transaction_table.c.transaction_id)
     })
-    mapper_registry.map_imperatively(Concert, concert_table, properties={
-        'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
+    mapper_registry.map_imperatively(Transaction, transaction_table)#), properties={
+    #    'reservation': relationship(Reservation, backref='transactions', order_by=transaction_table.c.transaction_id)
+    #})
+
+    mapper_registry.map_imperatively(Concert, concert_table)#, properties={
+    #    'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
 
     def get_concerts(self):
         concert_query = sqlalchemy.sql.select(Mapper.Concert) \

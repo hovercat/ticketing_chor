@@ -5,4 +5,5 @@ constants.py
 .idea/
 ACCESS_TOKEN
 mail.log
+nordigen_secrets.py
 verkaufstool

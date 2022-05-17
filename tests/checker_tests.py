@@ -1,17 +1,14 @@
 import datetime
 
 import sqlalchemy
-from sqlalchemy.orm import Session, close_all_sessions
-import sqlalchemy as db
-from psycopg2 import connect, sql
+from sqlalchemy.orm import close_all_sessions
 
 import unittest
 
 from checker import Checker
 MAIL_TEST = True
-from Mailgod import Mailgod
 from mapper import Mapper
-from api_secrets import *
+from constants import *
 
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 class CheckerTests(unittest.TestCase):
@@ -88,7 +85,12 @@ class CheckerTests(unittest.TestCase):
         self.db.session.add(self.concert)
         self.db.session.commit()
 
-        self.checker = Checker(ng_id=SECRET_ID, ng_key=SECRET_KEY, ng_refresh_token=REFRESH_TOKEN, ng_account=ACCOUNT_TOKEN, db_connector=SQL_CONNECTOR, log_file_path="checker_tests.log")
+        self.checker = Checker(ng_id=API_SECRETS['SECRET_ID'],
+                               ng_key=API_SECRETS['SECRET_KEY'],
+                               ng_refresh_token=API_SECRETS['REFRESH_TOKEN'],
+                               ng_account=API_SECRETS['ACCOUNT_TOKEN'],
+                               db_connector=SQL_CONNECTOR,
+                               log_file_path="checker_tests.log")
 
     def tearDown(self) -> None:
         close_all_sessions()
@@ -96,8 +98,8 @@ class CheckerTests(unittest.TestCase):
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
-        #self.db.session.commit()
-
+        self.db.session.rollback()
+        self.db.session.close()
 
     def test_add_transaction_to_db(self):
         nordigen_transactions = {
@@ -126,53 +128,66 @@ class CheckerTests(unittest.TestCase):
         ts2 = self.checker.add_transactions_to_db(nordigen_transactions)
         self.assertListEqual(ts2, [])
 
-    def test_check_reservation_finalize(self):
+    def test_finalize_paid_reservations(self):
         self.res.status = 'open'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
         self.assertEqual(f_res, [])
 
         self.res.status = 'open_reminded'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
         self.assertEqual(f_res, [])
 
         self.res.status = 'new_seen'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
         self.assertEqual(f_res, [])
 
         self.res.transactions.append(self.t1)
         self.res.status = 'open'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
         self.assertNotEqual(f_res, [])
         self.assertEqual(f_res[0].res_id, self.res.res_id)
 
         self.res.status = 'open_reminded'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
         self.assertNotEqual(f_res, [])
         self.assertEqual(f_res[0].res_id, self.res.res_id)
 
         self.res.status = 'new_seen'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
         self.assertNotEqual(f_res, [])
         self.assertEqual(f_res[0].res_id, self.res.res_id)
 
         self.res.status = 'canceled'
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_paid_reservations()
+        self.assertEqual(f_res, [])
+
+    def test_finalize_overpaid_reservations(self):
+        self.res.transactions.append(self.t1)
+        self.res.status = 'open'
+        self.db.session.commit()
+        f_res = self.checker.finalize_overpaid_reservations()
         self.assertEqual(f_res, [])
 
         self.res.status = 'open'
         self.res.transactions = []
         self.res.transactions.append(self.t2) # not enough
         self.db.session.commit()
-        f_res = self.checker.finalize_reservations()
+        f_res = self.checker.finalize_overpaid_reservations()
+        self.assertEqual(f_res, [])
+
+        self.res.transactions.append(self.t3) # too much
+        self.db.session.commit()
+        f_res = self.checker.finalize_overpaid_reservations()
         self.assertNotEqual(f_res, [])
-        self.assertEqual(f_res[0].status, 'disputed')
+        self.assertEqual(f_res[0].res_id, self.res.res_id)
+
 
 
     def test_remind_reservations(self):

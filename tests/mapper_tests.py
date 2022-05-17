@@ -1,7 +1,7 @@
 import datetime
 
 import sqlalchemy.sql
-from sqlalchemy.orm import Session, InstanceEvents
+from sqlalchemy.orm import Session, InstanceEvents, close_all_sessions
 import sqlalchemy as db
 from psycopg2 import connect, sql
 import sys
@@ -15,6 +15,7 @@ from mapper import Mapper
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 class MapperTests(unittest.TestCase):
     def setUp(self) -> None:
+        close_all_sessions()
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush
 
@@ -85,6 +86,7 @@ class MapperTests(unittest.TestCase):
         self.db.session.commit()
 
     def tearDown(self) -> None:
+        close_all_sessions()
         with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)

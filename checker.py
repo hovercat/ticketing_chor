@@ -1,23 +1,13 @@
-from argparse import ArgumentParser
+import csv
 from datetime import datetime, timedelta
-from uuid import uuid4
-
-import sqlalchemy
-from Mailgod import Mailgod
-from api_secrets import *
+from sqlalchemy import func, sql
 from mapper import Mapper
+
 from nordigen import NordigenClient
-
-parser = ArgumentParser()
-# parser.add_argument('--secret_key', type=str, required=True)
-# parser.add_argument('--secret_id', type=str, required=True)
-# parser.add_argument('--account_token', type=str, required=True)
-# parser.add_argument('--refresh_token', type=str, required=True)
-parser.add_argument('--sql_connector', type=str, required=True)
-parser.add_argument('--log_file', type=str, required=True)
+from constants import *
 
 
-class Checker:  # sorry kanon, es hat fucking gebuggt, nix ging
+class Checker:
     def __init__(self, ng_id, ng_key, ng_refresh_token, ng_account, db_connector, log_file_path):
         self.ng_id = ng_id
         self.ng_key = ng_key
@@ -50,7 +40,7 @@ class Checker:  # sorry kanon, es hat fucking gebuggt, nix ging
 
         for ng_t in ng_trans:
             # check if already exists (stupid but works)
-            query = sqlalchemy.sql.select(Mapper.Transaction).where(
+            query = sql.select(Mapper.Transaction).where(
                 ng_t['transactionId'] == Mapper.Transaction.bank_transaction_id)
             query_result = self.db.session.execute(query)
             if query_result.first() is not None:
@@ -68,7 +58,7 @@ class Checker:  # sorry kanon, es hat fucking gebuggt, nix ging
             t.debtor_name = ng_t.get('debtorName', None)
 
             # connect with reservation
-            reservation_query = sqlalchemy.sql.select(Mapper.Reservation).where(
+            reservation_query = sql.select(Mapper.Reservation).where(
                 t.payment_reference == Mapper.Reservation.payment_reference)
             reservation_result = self.db.session.execute(reservation_query)
             reservation = reservation_result.first()
@@ -88,158 +78,152 @@ class Checker:  # sorry kanon, es hat fucking gebuggt, nix ging
         return transactions
 
     def sight_new_reservations(self):
-        reservations = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(Mapper.Reservation.status == 'new'))
-        reservations = [r[0] for r in reservations]
-        for r in reservations:
-            r.sight_new_res()
-        if reservations:
-            self.db.session.commit()
-        return reservations
+        SQL_NEW_RESERVATIONS=sql.select(Mapper.Reservation).where(Mapper.Reservation.status == 'new')
+        return self.handle_reservations(SQL_NEW_RESERVATIONS, Mapper.Reservation.sight_new_res)
+
 
     def set_activated_reservations_to_open(self):
-        reservations = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(Mapper.Reservation.status == 'activated'))
+        SQL_ACTIVATED=sql.select(Mapper.Reservation).where(Mapper.Reservation.status == 'activated')
+        return self.handle_reservations(SQL_ACTIVATED, Mapper.Reservation.set_to_open)
+
+    def handle_reservations(self, reservation_query, func, args=None):
+        reservations = self.db.session.execute(reservation_query)
         reservations = [r[0] for r in reservations]
         for r in reservations:
-            r.set_to_open()  # kind of bad but consistent
+            if args:
+                func(r, args)
+            else:
+                func(r)
         if reservations:
             self.db.session.commit()
         return reservations
 
-    def finalize_reservations(self):
-        res = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(
-                Mapper.Reservation.status.in_(['open', 'open_reminded', 'new_seen'])).join(
-                Mapper.Reservation.transactions
-            )
+    SQL_HANDLE_TRANSACTIONS = sql.select(Mapper.Reservation) \
+        .join(Mapper.Reservation.transactions) \
+        .join(Mapper.Reservation.concert) \
+        .where(Mapper.Reservation.status.in_(['open', 'open_reminded', 'new_seen'])) \
+        .group_by(Mapper.Reservation)
+
+    def finalize_paid_reservations(self):
+        SQL_FINALIZE = Checker.SQL_HANDLE_TRANSACTIONS.having(
+            func.sum(Mapper.Transaction.amount) ==
+            func.sum(
+                Mapper.Concert.full_price * Mapper.Reservation.tickets_full_price +
+                Mapper.Concert.student_price * Mapper.Reservation.tickets_student_price)
         )
+        return self.handle_reservations(SQL_FINALIZE, Mapper.Reservation.finalize)
 
-        reservations = [r[0] for r in res]
-        for r in reservations:
-            # finalize if all correct
-            if r.get_paid_amount() == r.get_expected_amount():
-                r.finalize(self.db.mailgod)
-            # disputed if smaller than expected and TODO tell someone
-            elif 0 < r.get_paid_amount() < r.get_expected_amount():
-                # send_mail to person in charge'
-                r.dispute('Paid too litte.', self.db.mailgod)
-            # finalized if paid is bigger than expected and TODO tell someone!
-            elif r.get_paid_amount() > r.get_expected_amount():
-                # send_mail
-                r.dispute('Paid too much.', self.db.mailgod)
-                r.finalize(self.db.mailgod)
-        if reservations:
-            self.db.session.commit()
-        return reservations
+    def finalize_overpaid_reservations(self):
+        SQL_OVERPAID = Checker.SQL_HANDLE_TRANSACTIONS.having(
+            func.sum(Mapper.Transaction.amount) >
+            func.sum(
+                Mapper.Concert.full_price * Mapper.Reservation.tickets_full_price +
+                Mapper.Concert.student_price * Mapper.Reservation.tickets_student_price)
+        )
+        return self.handle_reservations(SQL_OVERPAID, Mapper.Reservation.finalize, 'paid too much')
+
+    def dispute_underpaid_reservations(self):
+        SQL_UNDERPAID = Checker.SQL_HANDLE_TRANSACTIONS.having(
+            func.sum(Mapper.Transaction.amount) <
+            func.sum(
+                Mapper.Concert.full_price * Mapper.Reservation.tickets_full_price +
+                Mapper.Concert.student_price * Mapper.Reservation.tickets_student_price)
+        )
+        return self.handle_reservations(SQL_UNDERPAID, Mapper.Reservation.dispute, 'paid too little')
 
     def close_unconfirmed_reservations(self):
-        reservations = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(
-                Mapper.Reservation.status == 'new_seen').filter(
-                Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(hours=24)
-            )
+        SQL_UNCONFIRMED_CASES = sql.select(Mapper.Reservation).where(
+            Mapper.Reservation.status == 'new_seen').filter(
+            Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(hours=24)
         )
-        reservations = [r[0] for r in reservations]
-        for r in reservations:
-            r.cancel_24h(self.db.mailgod)
-        if reservations:
-            self.db.session.commit()
-        return reservations
+        return self.handle_reservations(SQL_UNCONFIRMED_CASES, Mapper.Reservation.cancel_24h)
 
     def check_payment_of_canceled_res(self):
-        reservations = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(Mapper.Reservation.status == 'closed').join(
-                Mapper.Reservation.transactions))
-        reservations = [r[0] for r in reservations]
-        for r in reservations:
-            r.dispute('Was canceled but already paid!', self.db.mailgod)
-        if reservations:
-            self.db.session.commit()
-        return reservations
+        SQL_CHECK_CANCELED_BUT_PAID = sql.select(Mapper.Reservation)\
+            .where(Mapper.Reservation.status == 'closed')\
+            .join(Mapper.Reservation.transactions)
+
+        return self.handle_reservations(SQL_CHECK_CANCELED_BUT_PAID, Mapper.Reservation.dispute, 'canceled but paid')
 
     def remind_reservations(self):
-        reservations = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(
+        SQL_REMINDER = sql.select(Mapper.Reservation).where(
                 Mapper.Reservation.status == 'open' and
                 (Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(days=Mapper.Reservation.concert.duration_reminder))
             )
-        )
-        reservations = [r[0] for r in reservations]
-        for r in reservations:
-            r.remind(self.db.mailgod)
-        if reservations:
-            self.db.session.commit()
-        return reservations
+        return self.handle_reservations(SQL_REMINDER, Mapper.Reservation.remind)
 
     def close_old_unpaid_reservations(self):
-        reservations = self.db.session.execute(
-            sqlalchemy.sql.select(Mapper.Reservation).where(
+        SQL_CLOSE_UNPAID = sql.select(Mapper.Reservation).where(
                 Mapper.Reservation.status == 'open_reminded' and Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(
                     days=Mapper.Reservation.concert.duration_cancelation)
             )
-        )
-        reservations = [r[0] for r in reservations]
-        for r in reservations:
-            r.cancel(self.db.mailgod)
-        if reservations:
-            self.db.session.commit()
-        return reservations
+        return self.handle_reservations(SQL_CLOSE_UNPAID, Mapper.Reservation.cancel)
 
     def log_new_movements(self, reservation_dict: [], transaction_dict: []):
-        log_file_path = open(self.log_file_path, 'wa')
+        log_file_path = open(self.log_file_path, 'a')
 
-        for reason, reservations in reservation_dict:
+        for reason, reservations in reservation_dict.items():
             for r in reservations:
-                log_file_path.write("RESERVATION\t")
                 log_file_path.write(reason)
                 log_file_path.write('\t')
                 log_file_path.write(r.to_csv('\t'))
                 log_file_path.write('\n')
-        # for reason, t in transaction_dict: # todo
-        #     log_file_path.write("TRANSACTION\t")
-        #     log_file_path.write(reason)
-        #     log_file_path.write('\t')
-        #     log_file_path.write(t.to_csv('\t'))
 
 
-def main(args):
-    checker = Checker(ng_id=SECRET_ID, ng_key=SECRET_KEY, ng_refresh_token=REFRESH_TOKEN, ng_account=ACCOUNT_TOKEN,
-                      db_connector=args.sql_connector, log_file_path=args.log_file)
-    # get newly opened reservations
+    def log_current_states_to_file(self):
+        if not os.path.isdir(SNAPSHOT_FOLDER):
+            os.mkdir(SNAPSHOT_FOLDER)
+
+        with open(os.path.join(SNAPSHOT_FOLDER, 'RESERVATIONS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'a') as res_dump:
+            res = self.db.session.execute(sql.select(Mapper.Reservation))
+            out_csv = csv.writer(res_dump, delimiter='\t')
+            [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Reservation.__mapper__.columns]) for curr, in res]
+
+        with open(os.path.join(SNAPSHOT_FOLDER, 'TRANSACTION_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'a') as res_dump:
+            res = self.db.session.execute(sql.select(Mapper.Transaction))
+            out_csv = csv.writer(res_dump, delimiter='\t')
+            [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Transaction.__mapper__.columns]) for curr, in res]
+
+
+
+def main():
+    checker = Checker(ng_id=API_SECRETS['SECRET_ID'], ng_key=API_SECRETS['SECRET_KEY'], ng_refresh_token=API_SECRETS['REFRESH_TOKEN'], ng_account=API_SECRETS['ACCOUNT_TOKEN'],
+                      db_connector=DB_URL, log_file_path=CHECKER_LOG_FILE)
+    # get newly (non-activated) opened reservations
     res_new = checker.sight_new_reservations()
-    # get freshly activated reservations
+    # set activated reservations to open reservations # this is kinda stupid.
     res_open = checker.set_activated_reservations_to_open()
 
-    # get transactions
-    nordigen_transactions = checker.get_new_transactions()
-    new_valid_transactions = checker.add_transaction_to_db(nordigen_transactions)
+    # get transactions from nordigen_db
+    nordigen_transactions = checker.get_transactions_from_nordigen()
+    new_valid_transactions = checker.add_transactions_to_db(nordigen_transactions)
 
-    # finalize paid reservations
-    res_finalized = checker.finalize_reservations()
-    # close non-confirmed reservations after 24hours
+    # finalize and handle open reservations
+    res_finalized = checker.finalize_paid_reservations()
+    res_overpaid = checker.finalize_overpaid_reservations()
+    res_underpaid = checker.dispute_underpaid_reservations()
     res_not_confirmed = checker.close_unconfirmed_reservations()
-    # check whether canceled has been paid
-    res_canceled_paid = checker.check_payments_of_canceled_res()
-    # remind reservations that are not paid
+    res_canceled_paid = checker.check_payment_of_canceled_res()
     res_reminded = checker.remind_reservations()
-    # cancel too old reservations
-    res_closed = checker.close_old_reservations()
+    res_closed = checker.close_old_unpaid_reservations()
 
     checker.log_new_movements(
         {
-            "New Reservation": res_new,
-            "Activated Reservation": res_open,
-            "Finalized Reservation": res_finalized,
-            "Rejected Reservation 24h": res_not_confirmed,
+            "New Reservations": res_new,
+            "Activated Reservations": res_open,
+            "Finalized Reservations": res_finalized,
+            "Overpaid Reservations": res_overpaid,
+            "Underpaid Reservations": res_underpaid,
+            "Rejected Reservations 24h": res_not_confirmed,
             "Already closed, but paid Res": res_canceled_paid,
-            "Reminded Reservation": res_reminded,
-            "Closed Reservation": res_closed
+            "Reminded Reservations": res_reminded,
+            "Closed Reservations": res_closed
         },
         {}
     )
 
+    checker.log_current_states_to_file()
+
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    main(args)
+    main()

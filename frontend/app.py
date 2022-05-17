@@ -1,9 +1,9 @@
+import re
 from flask import Flask, render_template, request, url_for
 from ..mapper import Mapper
 from ..constants import *
 import json
 import datetime
-import time
 app = Flask(__name__)
 db = Mapper(DB_URL)
 
@@ -16,6 +16,22 @@ def landing():
 @app.route("/reserve", methods=['GET', 'POST'])
 def reserve():
     if request.method == 'POST': # Maybe just have one function for landing & confirmed page?
+
+        # email validation
+        regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        if not re.fullmatch(regex, request.form['email']):
+            print("Invalid Email")
+            return "Error: Email not valid."
+
+        tickets_full = int(request.form['tickets_full'])
+        tickets_student = int(request.form['tickets_student'])
+
+        if (tickets_full < 0 or tickets_student < 0  or tickets_student + tickets_full <= 0):
+            return "Error: Can't buy less than 0 tickets"
+        if (tickets_student + tickets_full > 50):
+            return "Error: Can't buy so many tickets. Please contact chor directly."
+
+
         reservation = Mapper.Reservation(
             user_email=request.form['email'],
             user_name=request.form['name'],
@@ -33,7 +49,8 @@ def reserve():
         reservation.set_payment_reference()
         db.session.commit()
         db.session.refresh(reservation)
-        reservation.reserve(db.mailgod) #TODO: WTF is even this DB API ?? Need to commit the DB object and get its Id then get it from DB or something
+        reservation.reserve() #TODO: WTF is even this DB API ?? Need to commit the DB object and get its Id then get it from DB or something
+        db.session.commit()
         return render_template("confirm.html", email=request.form['email'])
     elif request.method == 'GET':
         return "Error"
@@ -45,7 +62,7 @@ def confirm_reservation(reservation_hash):
         return render_template("not_found.html")
     else:
         if reservation.status == 'new' or reservation.status == 'new_seen':
-            reservation.activate(db.mailgod)
+            reservation.activate()
             db.session.commit()
         return render_template("confirmed.html",
                                total=reservation.get_expected_amount_eur(),
