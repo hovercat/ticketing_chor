@@ -9,7 +9,6 @@ from sqlalchemy import DateTime
 
 import unittest
 
-import checker
 from mapper import Mapper
 
 SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"

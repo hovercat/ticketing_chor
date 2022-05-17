@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 
+
 import sqlalchemy.sql
 from sqlalchemy.orm import Session, registry, relationship, sessionmaker
 import sqlalchemy as db
-from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float
+from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float, TIMESTAMP
 import hashlib
 
 from Mailgod import Mailgod
@@ -38,9 +39,9 @@ class Mapper:
         Column('student_price', Float(2)),
         Column('duration_reminder', Integer),
         Column('duration_cancelation', Integer),
-        Column('date_concert', Date),
-        Column('date_sale_start', Date),
-        Column('date_sale_end', Date),
+        Column('date_concert', TIMESTAMP),
+        Column('date_sale_start', TIMESTAMP),
+        Column('date_sale_end', TIMESTAMP),
         Column('total_tickets', Integer)
     )
 
@@ -87,9 +88,9 @@ class Mapper:
         Column('tickets_full_price', Integer),
         Column('tickets_student_price', Integer),
         Column('payment_reference', String),
-        Column('date_reservation_created', Date),
-        Column('date_email_activated', Date),
-        Column('date_reminded', Date),
+        Column('date_reservation_created', TIMESTAMP),
+        Column('date_email_activated', TIMESTAMP),
+        Column('date_reminded', TIMESTAMP),
         Column('status', String),
         Column('pay_state', String)
     )
