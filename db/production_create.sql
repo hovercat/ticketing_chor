@@ -1,9 +1,12 @@
-DROP database choir_ticketing;
-DROP SCHEMA ticketing CASCADE;
-COMMIT;
+/*DROP database choir_ticketing;*/
+/*DROP SCHEMA ticketing CASCADE;*/
+/*COMMIT;*/
 
-CREATE database choir_ticketing;
+/*CREATE database choir_ticketing;*/
+/* \connect choir_ticketing*/
 CREATE SCHEMA ticketing;
+COMMIT; 
+/*update pg_database set encoding = pg_char_to_encoding('UTF8') where datname = 'choir_ticketing'*/
 
 SET search_path TO ticketing,public;
 
@@ -80,6 +83,6 @@ alter table transaction
 INSERT INTO concert (concert_id, date_sale_start, date_sale_end, date_concert, concert_title, concert_location, full_price, student_price,
                      duration_reminder, duration_cancelation, total_tickets)
 VALUES
-    (1, '2022-05-17', '2022-06-22', '2022-06-24 19:00', 'Can’t stop the Feeling', 'Informatikhörsaal; Treitlstraße 3, 1040 Wien', 15, 5, 7, 14, 300);
+    (1, '2022-05-17', '2022-06-22', '2022-06-24 19:00', 'Can''t stop the Feeling', 'Informatikhörsaal; Treitlstraße 3, 1040 Wien', 15, 5, 7, 14, 300);
 
 COMMIT;

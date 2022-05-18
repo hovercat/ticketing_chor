@@ -12,11 +12,14 @@ from constants import DB_OPTIONS
 import locale
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # TODO boese hier
+#locale.setlocale(locale.LC_ALL, 'de_AT.UTF-8')
 mailgod = Mailgod()
 
 
 class Mapper:
-    def __init__(self, dbconnector):
+    def __init__(self, dbconnector, dboptions=DB_OPTIONS):
+       # raise Exception(dbconnector, DB_OPTIONS)
+        
         self.engine = db.create_engine(dbconnector, connect_args={'options': DB_OPTIONS})  # schema name
         self.session_factory = sessionmaker(self.engine)
         self.connection = self.engine.connect()
@@ -132,7 +135,7 @@ class Mapper:
             )
 
         def send_mail_user(self, mail_template_path, subject, extra_msg = None):
-            with open(mail_template_path, 'r') as f:
+            with open(mail_template_path, 'r', encoding='utf-8') as f:
                 mail_template = ''.join(f.readlines())
 
             mail_msg = mail_template.format(
@@ -146,6 +149,7 @@ class Mapper:
                 concert_full_price=self.concert.get_full_price_eur(),
                 concert_student_price=self.concert.get_student_price_eur(),
                 latest_date=self.concert.get_latest_possible_payment_date(),
+                latest_payment_date=self.concert.get_latest_possible_payment_date(),
                 reservation_date=self.get_reservation_date(),  # TODO MAKE BEATIFUL
                 payment_reference=self.get_payment_reference(),
                 total=self.get_expected_amount_eur()

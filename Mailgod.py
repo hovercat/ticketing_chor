@@ -31,7 +31,7 @@ class Mailgod:
         self.mail_off = MAILS_OFF
 
     def send_mail(self, _to: list, _subject: str, _message: str, _bcc: list = [], _respond_to: str = None) -> None:
-        with open(self.log_file, 'a') as log:
+        with open(self.log_file, 'a',encoding='utf-8') as log:
             #  Setup log entry
             log.write("===================================================================\n")
             log.write("{}\n".format(datetime.datetime.now().strftime('%d.%m.%Y, %H:%H:%S')))

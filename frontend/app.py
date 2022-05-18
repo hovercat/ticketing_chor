@@ -1,7 +1,7 @@
 import re
 from flask import Flask, render_template, request, url_for
-from ..mapper import Mapper
-from ..constants import *
+from mapper import Mapper
+from constants import *
 import json
 import datetime
 app = Flask(__name__)
