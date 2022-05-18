@@ -146,16 +146,16 @@ class Checker:
         return self.handle_reservations(SQL_CHECK_CANCELED_BUT_PAID, Mapper.Reservation.dispute, 'canceled but paid')
 
     def remind_reservations(self):
-        SQL_REMINDER = sql.select(Mapper.Reservation).where(
+        SQL_REMINDER = sql.select(Mapper.Reservation).join(Mapper.Concert).where(
                 Mapper.Reservation.status == 'open' and
-                (Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(days=Mapper.Reservation.concert.duration_reminder))
+                (Mapper.Reservation.date_reservation_created <= (datetime.now() - timedelta(days=Mapper.Reservation.concert.duration_reminder)))
             )
         return self.handle_reservations(SQL_REMINDER, Mapper.Reservation.remind)
 
     def close_old_unpaid_reservations(self):
-        SQL_CLOSE_UNPAID = sql.select(Mapper.Reservation).where(
-                Mapper.Reservation.status == 'open_reminded' and Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(
-                    days=Mapper.Reservation.concert.duration_cancelation)
+        SQL_CLOSE_UNPAID = sql.select(Mapper.Reservation).join(Mapper.Concert).where(
+                Mapper.Reservation.status == 'open_reminded' and Mapper.Reservation.date_reservation_created <= (datetime.now() - timedelta(
+                    days=Mapper.Reservation.concert.duration_cancelation))
             )
         return self.handle_reservations(SQL_CLOSE_UNPAID, Mapper.Reservation.cancel)
 

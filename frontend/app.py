@@ -38,7 +38,6 @@ def reserve():
             tickets_full_price=int(request.form['tickets_full']), 
             tickets_student_price=int(request.form['tickets_student']),
             date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
-            date_email_activated=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             status='new',
             pay_state='none',
             concert_id=int(request.form['concertdate'])
