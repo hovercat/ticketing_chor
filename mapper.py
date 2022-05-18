@@ -71,10 +71,6 @@ class Mapper:
         def get_concert_time(self):
             return self.date_concert.strftime('%H:%M')
 
-        def get_latest_possible_payment_date(self):
-            # TODO!
-            pass
-
         def get_student_price_eur(self):
             return locale.currency(self.student_price)
 
@@ -148,8 +144,8 @@ class Mapper:
                 tickets_student_price=self.tickets_student_price,
                 concert_full_price=self.concert.get_full_price_eur(),
                 concert_student_price=self.concert.get_student_price_eur(),
-                latest_date=self.concert.get_latest_possible_payment_date(),
-                latest_payment_date=self.concert.get_latest_possible_payment_date(),
+                latest_date=self.get_latest_possible_payment_date(),
+                latest_payment_date=self.get_latest_possible_payment_date(),
                 reservation_date=self.get_reservation_date(),  # TODO MAKE BEATIFUL
                 payment_reference=self.get_payment_reference(),
                 total=self.get_expected_amount_eur()
