@@ -56,11 +56,17 @@ class Mapper:
         def get_reserved_tickets_amount(self):
             return sum(res.tickets_full_price + res.tickets_student_price for res in self.get_reserved_tickets())
 
+        def get_reserved_tickets_amount_money(self):
+            return sum(res.tickets_full_price * res.concert.full_price + res.tickets_student_price * res.concert.student_price for res in self.get_reserved_tickets())
+
         def get_sold_tickets(self):
             return list(filter(lambda res: res.status in ['finalized'], self.reservations))
 
         def get_sold_tickets_amount(self):
             return sum(res.tickets_full_price + res.tickets_student_price for res in self.get_sold_tickets())
+
+        def get_sold_tickets_amount_money(self):
+            return sum(res.tickets_full_price * res.concert.full_price + res.tickets_student_price * res.concert.student_price for res in self.get_sold_tickets())
 
         def get_available_tickets_amount(self):
             return self.total_tickets - self.get_reserved_tickets_amount()

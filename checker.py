@@ -186,25 +186,46 @@ class Checker:
         if not os.path.isdir(SNAPSHOT_FOLDER):
             os.mkdir(SNAPSHOT_FOLDER)
 
-        with open(os.path.join(SNAPSHOT_FOLDER, 'RESERVATIONS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'w') as res_dump:
+        this_snapshot_dir=os.path.join(SNAPSHOT_FOLDER, datetime.now().strftime('%Y_%m_%d.%H.%M.%S'))
+        os.mkdir(this_snapshot_dir)
+
+        with open(os.path.join(this_snapshot_dir, 'RESERVATIONS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M.%S'))), 'w') as res_dump:
             res = self.db.session.execute(sql.select(Mapper.Reservation))
             out_csv = csv.writer(res_dump, delimiter='\t')
             [out_csv.writerow(Mapper.Reservation.__table__.columns.keys())]
             [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Reservation.__mapper__.columns]) for curr, in res]
 
-        with open(os.path.join(SNAPSHOT_FOLDER, 'TRANSACTION_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'w') as res_dump:
+        with open(os.path.join(this_snapshot_dir, 'TRANSACTION_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M.%S'))), 'w') as res_dump:
             res = self.db.session.execute(sql.select(Mapper.Transaction))
             out_csv = csv.writer(res_dump, delimiter='\t')
             [out_csv.writerow(Mapper.Transaction.__table__.columns.keys())]
             [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Transaction.__mapper__.columns]) for curr, in res]
 
-        with open(os.path.join(SNAPSHOT_FOLDER, 'CONCERTS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'w') as res_dump:
+        with open(os.path.join(this_snapshot_dir, 'CONCERTS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M.%S'))), 'w') as res_dump:
             res = self.db.session.execute(sql.select(Mapper.Concert))
             out_csv = csv.writer(res_dump, delimiter='\t')
             [out_csv.writerow(Mapper.Concert.__table__.columns.keys())]
             [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Concert.__mapper__.columns]) for curr, in res]
 
+        with open(os.path.join(this_snapshot_dir, 'current_status.csv'), 'w') as current_status_file:
+            concerts = self.db.session.execute(sql.select(Mapper.Concert))
+            concerts = [c[0] for c in concerts]
+            out_csv = csv.writer(current_status_file, delimiter='\t')
+            out_csv.writerow(['concert_id', 'concert_title', 'total_tickets', 'tickets_left', 'reservations', 'reserved_tickets', 'expected_income', 'finalized_reservations', 'tickets_sold', 'current_income'])
 
+            for c in concerts:
+                out_csv.writerow([
+                    c.concert_id,
+                    c.concert_title,
+                    c.total_tickets,
+                    c.total_tickets - c.get_reserved_tickets_amount(),
+                    len(c.get_reserved_tickets()),
+                    c.get_reserved_tickets_amount(),
+                    c.get_reserved_tickets_amount_money(),
+                    len(c.get_sold_tickets()),
+                    c.get_sold_tickets_amount(),
+                    c.get_sold_tickets_amount_money()
+                ])
 
 def main():
     checker = Checker(ng_id=API_SECRETS['SECRET_ID'], ng_key=API_SECRETS['SECRET_KEY'], ng_refresh_token=API_SECRETS['REFRESH_TOKEN'], ng_account=API_SECRETS['ACCOUNT_TOKEN'],
