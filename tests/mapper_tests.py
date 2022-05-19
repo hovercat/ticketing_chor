@@ -21,7 +21,7 @@ class MapperTests(unittest.TestCase):
         with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
-        with open('db/create_tables.sql') as file:
+        with open('db/production_create.sql') as file:
             query = sqlalchemy.text(file.read())
             self.db.session.execute(query)
 
@@ -41,9 +41,9 @@ class MapperTests(unittest.TestCase):
             date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             date_email_activated=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             status='new',
-            pay_state='none',
-            payment_reference='xyz'
+            pay_state='none'
         )
+        self.res.set_payment_reference()
         self.res.concert = self.concert
         self.t1 = Mapper.Transaction(
             transaction_id=1,
@@ -94,11 +94,19 @@ class MapperTests(unittest.TestCase):
         self.db.session.close()
 
     def test_reservation_get_expected_amount(self):
-        self.assertEqual(self.res.get_paid_amount(), 0)
+        res = self.db.get_reservation_by_payment_reference(self.res.payment_reference)
+        self.assertEqual(res.get_paid_amount(), 0)
         self.res.transactions.append(self.t1)
-        self.assertEqual(self.res.get_paid_amount(), 402)
+        self.db.session.commit()
+
+        res = self.db.get_reservation_by_payment_reference(self.res.payment_reference)
+        self.assertEqual(res.get_paid_amount(), 402)
+
         self.res.transactions.append(self.t2)
-        self.assertEqual(self.res.get_paid_amount(), 801)
+        self.db.session.commit()
+
+        res = self.db.get_reservation_by_payment_reference(self.res.payment_reference)
+        self.assertEqual(res.get_paid_amount(), 801)
 
     def test_reservation_get_paid_amount(self):
         self.assertEqual(self.res.get_paid_amount(), 0)
@@ -117,8 +125,13 @@ class MapperTests(unittest.TestCase):
 
     def test_get_reserved_tickets(self):
         self.res.status = 'open'
+        self.db.session.commit()
+        self.db.session.refresh(self.concert)
         self.assertListEqual(self.concert.get_reserved_tickets(), [self.res])
+
         self.res.status = 'canceled'
+        self.db.session.commit()
+        self.db.session.refresh(self.concert)
         self.assertListEqual(self.concert.get_reserved_tickets(), [])
 
     def test_get_reserved_tickets_amount(self):

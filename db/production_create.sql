@@ -11,6 +11,16 @@ COMMIT;
 
 SET search_path TO ticketing,public;
 
+create table post_tokens
+(
+    pt_id   serial constraint post_tokens_pk primary key,
+    token varchar,
+    token_time  timestamp default CURRENT_TIMESTAMP,
+    what_for    varchar,
+    used    bool
+);
+
+
 create table concert
 (
     concert_id           serial
@@ -81,9 +91,9 @@ alter table transaction
 
 
 
-INSERT INTO concert (concert_id, date_sale_start, date_sale_end, date_concert, concert_title, concert_location, full_price, student_price,
-                     duration_reminder, duration_cancelation, total_tickets)
-VALUES
-    (1, '2022-05-17', '2022-06-22', '2022-06-24 19:30', 'Can''t stop the Feeling', 'Informatikhörsaal; Treitlstraße 3, 1040 Wien', 15, 5, 7, 14, 300);
+--INSERT INTO concert (concert_id, date_sale_start, date_sale_end, date_concert, concert_title, concert_location, full_price, student_price,
+--                     duration_reminder, duration_cancelation, total_tickets)
+--VALUES
+--    (1, '2022-05-17', '2022-06-22', '2022-06-24 19:30', 'Can''t stop the Feeling', 'Informatikhörsaal; Treitlstraße 3, 1040 Wien', 15, 5, 7, 14, 300);
 
 COMMIT;

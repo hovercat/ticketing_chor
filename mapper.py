@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import sqlalchemy.sql
 from sqlalchemy.orm import Session, registry, relationship, sessionmaker
 import sqlalchemy as db
-from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float, TIMESTAMP, Boolean
+from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float, TIMESTAMP, Boolean, func
 import hashlib
 
 from Mailgod import Mailgod
@@ -93,7 +93,7 @@ class Mapper:
         Column('tickets_full_price', Integer),
         Column('tickets_student_price', Integer),
         Column('payment_reference', String),
-        Column('date_reservation_created', TIMESTAMP),
+        Column('date_reservation_created', TIMESTAMP, server_default=func.now()),
         Column('date_email_activated', TIMESTAMP),
         Column('date_reminded', TIMESTAMP),
         Column('status', String),
@@ -107,10 +107,19 @@ class Mapper:
         #     self.payment_reference = self.get_payment_reference()
 
         def set_payment_reference(self):
-            self.payment_reference = self.get_payment_reference()
+            dt_creation = self.date_reservation_created
+            dt_1970 = datetime(1970, 1, 1)
+            seconds = (dt_creation - dt_1970).total_seconds()
+            pre_hash = hashlib.sha1(str(seconds).encode()).digest()
+            true_hash = hashlib.sha1(
+                str(int.from_bytes(self.res_id * pre_hash, byteorder='little')).encode()).hexdigest()
 
-        def get_payment_reference(self):
-            return hashlib.sha1(str(self.res_id).encode()).hexdigest()[:7]
+            self.payment_reference = true_hash[:7]
+
+        def get_payment_reference(self): # TODO test
+            if not self.payment_reference:
+                self.set_payment_reference()
+            return self.payment_reference
 
         def get_expected_amount(self):
             return self.tickets_full_price * self.concert.full_price + \
