@@ -11,7 +11,7 @@ import unittest
 
 from mapper import Mapper
 
-SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
+SQL_CONNECTOR = "postgresql://postgres@localhost:5432/"
 class MapperTests(unittest.TestCase):
     def setUp(self) -> None:
         close_all_sessions()

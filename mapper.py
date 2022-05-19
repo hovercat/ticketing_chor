@@ -1,3 +1,4 @@
+import smtplib
 from datetime import datetime, timedelta
 
 
@@ -123,14 +124,18 @@ class Mapper:
             return (self.date_reservation_created + timedelta(days=self.concert.duration_cancelation)).strftime(
                 '%d.%m.%Y')
 
-        def send_mail(self, message, subject, receivers):
-            mailgod.send_mail(
-                receivers,
-                _message=message,
-                _subject=subject
-            )
+        def send_mail(self, message, subject, receivers, file_name=None):
+            try:
+                mailgod.send_mail(
+                    receivers,
+                    _message=message,
+                    _subject=subject,
+                    file_name=file_name
+                )
+            except smtplib.SMTPRecipientsRefused as e:
+                raise e
 
-        def send_mail_user(self, mail_template_path, subject, extra_msg = None):
+        def send_mail_user(self, mail_template_path, subject, extra_msg = None, file_name = None):
             with open(mail_template_path, 'r', encoding='utf-8') as f:
                 mail_template = ''.join(f.readlines())
 
@@ -150,7 +155,10 @@ class Mapper:
                 payment_reference=self.get_payment_reference(),
                 total=self.get_expected_amount_eur()
             )
-            self.send_mail(mail_msg, subject, [self.user_email])
+            try:
+                self.send_mail(mail_msg, subject, [self.user_email], file_name=file_name)
+            except smtplib.SMTPRecipientsRefused as e:
+                raise e
 
             if extra_msg:
                 self.send_mail_managers(extra_msg, extra_msg)
@@ -161,10 +169,20 @@ class Mapper:
 
         def reserve(self):
             self.status = 'new'
-            self.send_mail_user(
-                "email_templates/activate.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bitte bestätigen'.format(date=self.get_reservation_date())
-            )
+
+            try:
+                self.send_mail_user(
+                    "email_templates/activate.html",
+                    subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bitte bestätigen'.format(date=self.get_reservation_date()),
+                    file_name='NeueReservierung_{}_{}_{}'.format(
+                        self.user_name,
+                        self.payment_reference,
+                        datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    )
+                )
+            except smtplib.SMTPRecipientsRefused as e:
+                self.status = 'closed' # email doesnt work!
+                raise e
 
         def sight_new_res(self):
             self.status = 'new_seen'
@@ -176,7 +194,12 @@ class Mapper:
             self.status = 'activated'
             self.send_mail_user(
                 "email_templates/activated.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date())
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date()),
+                file_name='Bezahlt_{}_{}_{}'.format(
+                    self.user_name,
+                    self.payment_reference,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                )
             )
 
         def finalize(self, extra_msg =''):
@@ -184,28 +207,48 @@ class Mapper:
             self.send_mail_user(
                 "email_templates/finalize.html",
                 subject='Ihre Buchung TU Wien Chor Konzert am {date} - Zahlung erfolgt'.format(date=self.get_reservation_date()),
-                extra_msg = extra_msg
+                extra_msg = extra_msg,
+                file_name='Finalisiert_{}_{}_{}'.format(
+                    self.user_name,
+                    self.payment_reference,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                )
             )
 
         def remind(self):
             self.status = 'open_reminded'
             self.send_mail_user(
                 "email_templates/reminder.html",
-                subject='Erinnerung: Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date())
+                subject='Erinnerung: Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date()),
+                file_name='Erinnerung_{}_{}_{}'.format(
+                    self.user_name,
+                    self.payment_reference,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                )
             )
 
         def cancel(self):
             self.status = 'canceled'
             self.send_mail_user(
                 "email_templates/cancelation.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date())
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
+                file_name='Canceled_{}_{}_{}'.format(
+                    self.user_name,
+                    self.payment_reference,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                )
             )
 
         def cancel_24h(self):
             self.status = 'canceled'
             self.send_mail_user(
                 "email_templates/cancelation_24h.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date())
+                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
+                file_name='Canceled24h_{}_{}_{}'.format(
+                    self.user_name,
+                    self.payment_reference,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                )
             )
 
         def dispute(self, msg: str, send_mail=False, status='disputed'):
@@ -214,7 +257,12 @@ class Mapper:
                 mailgod.send_mail(
                     mailgod.mail_sale_managers,
                     _subject='Disputed Reservation',
-                    _message=msg
+                    _message=msg,
+                    file_name='DISPUTE_{}_{}_{}'.format(
+                        self.user_name,
+                        self.payment_reference,
+                        datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    )
                 )
 
         def to_csv(self, sep=' ', header=False):

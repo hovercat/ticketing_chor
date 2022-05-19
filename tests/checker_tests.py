@@ -10,7 +10,7 @@ MAIL_TEST = True
 from mapper import Mapper
 from constants import *
 
-SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
+SQL_CONNECTOR = "postgresql://postgres@localhost:5432/"
 class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
         import mail_secrets as ms
