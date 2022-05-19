@@ -1,3 +1,13 @@
 IMPORTANT:
-    Add hidden field in the reservation to prevent repost of same data.
-    Save emails als eml files.
+    <check> Add hidden field in the reservation to prevent repost of same data.
+    <check> Save emails als eml files.
+    Put logs somewhere where everybody has permission.
+    <nope, font size increase> Datenschutzerklärung again on an own webpage in bigger font.
+
+General Design-Flaws/Ideas:
+    - The webserver currently creates reservations on it's own.
+        The webserver should only call events, that trigger the event_watcher_server.py, listening to these events.
+
+    man könnt den checker in den webserver integrieren. dann würd der ständig neue reservierungen checken, und es würde einfach ein programm laufen, dass auf die gleichen variablen und objekte zugreifen kann. wieso sollt man das auf zwei aufteilen?
+
+

@@ -12,7 +12,11 @@
         <div class="content">
         <h1>Reservierung bestätigt!<a href="https://www.tuwien.at/chor"><img id="logo" src="/static/tu_chor_final_blau.png" alt="Logo TU Wien Chor"></a></h1>
         <span id="emailtext">
-            Ihre Reservierung wurde somit bestätigt!
+            {% if newly_confirmed %}
+            Ihre Reservierung wurde somit bestätigt!<br>
+            {% else %}
+            Diese Reservierung wurde schon bestätigt.<br>
+            {% endif %}
             <br>
             Bitte überweisen Sie den Betrag von <b>{{ total }}</b> bis <b>{{ latest_payment_date }}</b> mit dem Verwendungszweck <b>{{ payment_reference }}</b> auf das Konto des TU Wien Chors. <br>
             <br>

@@ -105,7 +105,7 @@ class Mapper:
             self.payment_reference = self.get_payment_reference()
 
         def get_payment_reference(self):
-            return hashlib.sha1(str(self.res_id).encode()).hexdigest()[:10]
+            return hashlib.sha1(str(self.res_id).encode()).hexdigest()[:7]
 
         def get_expected_amount(self):
             return self.tickets_full_price * self.concert.full_price + \
@@ -173,7 +173,7 @@ class Mapper:
             try:
                 self.send_mail_user(
                     "email_templates/activate.html",
-                    subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bitte bestätigen'.format(date=self.get_reservation_date()),
+                    subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bitte bestätigen'.format(date=self.get_reservation_date()),
                     file_name='NeueReservierung_{}_{}_{}'.format(
                         self.user_name,
                         self.payment_reference,
@@ -194,7 +194,7 @@ class Mapper:
             self.status = 'activated'
             self.send_mail_user(
                 "email_templates/activated.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(date=self.get_reservation_date()),
                 file_name='Bezahlt_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -206,7 +206,7 @@ class Mapper:
             self.status = 'finalized'
             self.send_mail_user(
                 "email_templates/finalize.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Zahlung erfolgt'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Zahlung erfolgt'.format(date=self.get_reservation_date()),
                 extra_msg = extra_msg,
                 file_name='Finalisiert_{}_{}_{}'.format(
                     self.user_name,
@@ -219,7 +219,7 @@ class Mapper:
             self.status = 'open_reminded'
             self.send_mail_user(
                 "email_templates/reminder.html",
-                subject='Erinnerung: Ihre Buchung TU Wien Chor Konzert am {date} - Bezahlung'.format(date=self.get_reservation_date()),
+                subject='Erinnerung: TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(date=self.get_reservation_date()),
                 file_name='Erinnerung_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -231,7 +231,7 @@ class Mapper:
             self.status = 'canceled'
             self.send_mail_user(
                 "email_templates/cancelation.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
                 file_name='Canceled_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -243,7 +243,7 @@ class Mapper:
             self.status = 'canceled'
             self.send_mail_user(
                 "email_templates/cancelation_24h.html",
-                subject='Ihre Buchung TU Wien Chor Konzert am {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
                 file_name='Canceled24h_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,

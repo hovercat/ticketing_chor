@@ -4,6 +4,7 @@
 
 /*CREATE database choir_ticketing;*/
 /* \connect choir_ticketing*/
+DROP SCHEMA IF EXISTS ticketing CASCADE;
 CREATE SCHEMA ticketing;
 COMMIT; 
 /*update pg_database set encoding = pg_char_to_encoding('UTF8') where datname = 'choir_ticketing'*/
