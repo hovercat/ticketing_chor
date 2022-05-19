@@ -191,6 +191,7 @@ class Mapper:
 
         def activate(self):
             self.status = 'activated'
+            self.date_email_activated = datetime.now()
             self.send_mail_user(
                 "email_templates/activated.html",
                 subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
@@ -218,6 +219,7 @@ class Mapper:
 
         def remind(self):
             self.status = 'open_reminded'
+            self.date_reminded = datetime.now()
             self.send_mail_user(
                 "email_templates/reminder.html",
                 subject='Erinnerung: TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
@@ -270,19 +272,19 @@ class Mapper:
                 )
 
         def to_csv(self, sep=' ', header=False):
-            return sep.join(
-                self.res_id,
+            return sep.join([
+                str(self.res_id),
                 self.payment_reference,
-                self.get_expected_amount(),
-                self.get_paid_amount(),
-                self.concert_id,
+                str(self.get_expected_amount()),
+                str(self.get_paid_amount()),
+                str(self.concert_id),
                 self.user_email,
                 self.user_name,
-                self.tickets_full_price,
-                self.tickets_student_price,
+                str(self.tickets_full_price),
+                str(self.tickets_student_price),
                 self.get_reservation_date(),
                 self.get_latest_possible_payment_date(),
-                self.status
+                self.status]
             )
 
     transaction_table = Table(

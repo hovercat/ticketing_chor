@@ -1,6 +1,8 @@
 import csv
 from datetime import datetime, timedelta
-from sqlalchemy import func, sql
+
+from requests import HTTPError
+from sqlalchemy import func, sql, text
 from mapper import Mapper
 
 from nordigen import NordigenClient
@@ -31,7 +33,10 @@ class Checker:
 
     def get_transactions_from_nordigen(self):
         #  get bank account
-        bank_account = self.nordigen_client.account_api(self.ng_account)
+        try:
+            bank_account = self.nordigen_client.account_api(self.ng_account)
+        except HTTPError as e:
+            raise e
         return bank_account.get_transactions()
 
     def add_transactions_to_db(self, nordigen_transactions):
@@ -132,10 +137,13 @@ class Checker:
         return self.handle_reservations(SQL_UNDERPAID, Mapper.Reservation.dispute, 'paid too little')
 
     def close_unconfirmed_reservations(self):
-        SQL_UNCONFIRMED_CASES = sql.select(Mapper.Reservation).where(
-            Mapper.Reservation.status == 'new_seen').filter(
-            Mapper.Reservation.date_reservation_created <= datetime.now() - timedelta(hours=24)
+        SQL_UNCONFIRMED_CASES = sql.select(
+            Mapper.Reservation,
+        ).where(
+            Mapper.Reservation.status == 'new_seen',
+            datetime.now() - Mapper.Reservation.date_reservation_created > func.make_interval(0, 0, 0, 0, 24, 0)
         )
+
         return self.handle_reservations(SQL_UNCONFIRMED_CASES, Mapper.Reservation.cancel_24h)
 
     def check_payment_of_canceled_res(self):
@@ -146,17 +154,21 @@ class Checker:
         return self.handle_reservations(SQL_CHECK_CANCELED_BUT_PAID, Mapper.Reservation.dispute, 'canceled but paid')
 
     def remind_reservations(self):
-        SQL_REMINDER = sql.select(Mapper.Reservation).join(Mapper.Concert).where(
-                Mapper.Reservation.status == 'open' and
-                (Mapper.Reservation.date_reservation_created <= (datetime.now() - timedelta(days=Mapper.Reservation.concert.duration_reminder)))
-            )
+        SQL_REMINDER = sql.select(
+            Mapper.Reservation,
+        ).where(
+            Mapper.Reservation.status == 'open',
+            datetime.now() - Mapper.Reservation.date_reservation_created > func.make_interval(0,0,0,Mapper.Concert.duration_reminder,0,0)
+        )
         return self.handle_reservations(SQL_REMINDER, Mapper.Reservation.remind)
 
     def close_old_unpaid_reservations(self):
-        SQL_CLOSE_UNPAID = sql.select(Mapper.Reservation).join(Mapper.Concert).where(
-                Mapper.Reservation.status == 'open_reminded' and Mapper.Reservation.date_reservation_created <= (datetime.now() - timedelta(
-                    days=Mapper.Reservation.concert.duration_cancelation))
-            )
+        SQL_CLOSE_UNPAID = sql.select(
+            Mapper.Reservation,
+        ).where(
+            Mapper.Reservation.status == 'open_reminded',
+            datetime.now() - Mapper.Reservation.date_reservation_created > func.make_interval(0, 0, 0, Mapper.Concert.duration_cancelation, 0, 0)
+        )
         return self.handle_reservations(SQL_CLOSE_UNPAID, Mapper.Reservation.cancel)
 
     def log_new_movements(self, reservation_dict: [], transaction_dict: []):
@@ -174,15 +186,23 @@ class Checker:
         if not os.path.isdir(SNAPSHOT_FOLDER):
             os.mkdir(SNAPSHOT_FOLDER)
 
-        with open(os.path.join(SNAPSHOT_FOLDER, 'RESERVATIONS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'a') as res_dump:
+        with open(os.path.join(SNAPSHOT_FOLDER, 'RESERVATIONS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'w') as res_dump:
             res = self.db.session.execute(sql.select(Mapper.Reservation))
             out_csv = csv.writer(res_dump, delimiter='\t')
+            [out_csv.writerow(Mapper.Reservation.__table__.columns.keys())]
             [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Reservation.__mapper__.columns]) for curr, in res]
 
-        with open(os.path.join(SNAPSHOT_FOLDER, 'TRANSACTION_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'a') as res_dump:
+        with open(os.path.join(SNAPSHOT_FOLDER, 'TRANSACTION_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'w') as res_dump:
             res = self.db.session.execute(sql.select(Mapper.Transaction))
             out_csv = csv.writer(res_dump, delimiter='\t')
+            [out_csv.writerow(Mapper.Transaction.__table__.columns.keys())]
             [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Transaction.__mapper__.columns]) for curr, in res]
+
+        with open(os.path.join(SNAPSHOT_FOLDER, 'CONCERTS_{}.csv'.format(datetime.now().strftime('%Y_%m_%d.%H.%M'))), 'w') as res_dump:
+            res = self.db.session.execute(sql.select(Mapper.Concert))
+            out_csv = csv.writer(res_dump, delimiter='\t')
+            [out_csv.writerow(Mapper.Concert.__table__.columns.keys())]
+            [out_csv.writerow([getattr(curr, column.name) for column in Mapper.Concert.__mapper__.columns]) for curr, in res]
 
 
 
@@ -195,8 +215,13 @@ def main():
     res_open = checker.set_activated_reservations_to_open()
 
     # get transactions from nordigen_db
-    nordigen_transactions = checker.get_transactions_from_nordigen()
-    new_valid_transactions = checker.add_transactions_to_db(nordigen_transactions)
+    try:
+        nordigen_transactions = checker.get_transactions_from_nordigen()
+        new_valid_transactions = checker.add_transactions_to_db(nordigen_transactions)
+    except HTTPError as http_error:
+        nordigen_transactions = []
+        new_valid_transactions = []
+        print(http_error)
 
     # finalize and handle open reservations
     res_finalized = checker.finalize_paid_reservations()
