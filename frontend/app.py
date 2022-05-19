@@ -27,8 +27,7 @@ def landing():
 def reserve():
     if request.method == 'POST':  # Maybe just have one function for landing & confirmed page?
         # check repost token
-        if request.form['hidden_repost_token'] in repost_tokens and repost_tokens[
-            request.form['hidden_repost_token']] == 0:
+        if request.form['hidden_repost_token'] in repost_tokens and repost_tokens[request.form['hidden_repost_token']] == 0:
             repost_tokens[request.form['hidden_repost_token']] = 1
         else:
             return render_template("error.html", error1="Das Formular hat leider seine Gültigkeit verloren.",
