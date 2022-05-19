@@ -1,3 +1,12 @@
+create table post_tokens
+(
+    pt_id   serial constraint post_tokens_pk primary key,
+    token varchar,
+    token_time  timestamp default CURRENT_TIMESTAMP,
+    what_for    varchar,
+    used    bool
+);
+
 create table concert
 (
     concert_id           serial

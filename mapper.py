@@ -1,11 +1,10 @@
 import smtplib
 from datetime import datetime, timedelta
 
-
 import sqlalchemy.sql
 from sqlalchemy.orm import Session, registry, relationship, sessionmaker
 import sqlalchemy as db
-from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float, TIMESTAMP
+from sqlalchemy import Column, String, Integer, Date, Table, ForeignKey, Float, TIMESTAMP, Boolean
 import hashlib
 
 from Mailgod import Mailgod
@@ -13,14 +12,14 @@ from constants import DB_OPTIONS
 import locale
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # TODO boese hier
-#locale.setlocale(locale.LC_ALL, 'de_AT.UTF-8')
+# locale.setlocale(locale.LC_ALL, 'de_AT.UTF-8')
 mailgod = Mailgod()
 
 
 class Mapper:
     def __init__(self, dbconnector, dboptions=DB_OPTIONS):
-       # raise Exception(dbconnector, DB_OPTIONS)
-        
+        # raise Exception(dbconnector, DB_OPTIONS)
+
         self.engine = db.create_engine(dbconnector, connect_args={'options': DB_OPTIONS})  # schema name
         self.session_factory = sessionmaker(self.engine)
         self.connection = self.engine.connect()
@@ -135,7 +134,7 @@ class Mapper:
             except smtplib.SMTPRecipientsRefused as e:
                 raise e
 
-        def send_mail_user(self, mail_template_path, subject, extra_msg = None, file_name = None):
+        def send_mail_user(self, mail_template_path, subject, extra_msg=None, file_name=None):
             with open(mail_template_path, 'r', encoding='utf-8') as f:
                 mail_template = ''.join(f.readlines())
 
@@ -163,7 +162,6 @@ class Mapper:
             if extra_msg:
                 self.send_mail_managers(extra_msg, extra_msg)
 
-
         def send_mail_managers(self, message, subject):
             self.send_mail(message, subject, mailgod.mail_sale_managers)
 
@@ -173,7 +171,8 @@ class Mapper:
             try:
                 self.send_mail_user(
                     "email_templates/activate.html",
-                    subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bitte bestätigen'.format(date=self.get_reservation_date()),
+                    subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bitte bestätigen'.format(
+                        date=self.get_reservation_date()),
                     file_name='NeueReservierung_{}_{}_{}'.format(
                         self.user_name,
                         self.payment_reference,
@@ -181,7 +180,7 @@ class Mapper:
                     )
                 )
             except smtplib.SMTPRecipientsRefused as e:
-                self.status = 'closed' # email doesnt work!
+                self.status = 'closed'  # email doesnt work!
                 raise e
 
         def sight_new_res(self):
@@ -194,7 +193,8 @@ class Mapper:
             self.status = 'activated'
             self.send_mail_user(
                 "email_templates/activated.html",
-                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
+                    date=self.get_reservation_date()),
                 file_name='Bezahlt_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -202,12 +202,13 @@ class Mapper:
                 )
             )
 
-        def finalize(self, extra_msg =''):
+        def finalize(self, extra_msg=''):
             self.status = 'finalized'
             self.send_mail_user(
                 "email_templates/finalize.html",
-                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Zahlung erfolgt'.format(date=self.get_reservation_date()),
-                extra_msg = extra_msg,
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Zahlung erfolgt'.format(
+                    date=self.get_reservation_date()),
+                extra_msg=extra_msg,
                 file_name='Finalisiert_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -219,7 +220,8 @@ class Mapper:
             self.status = 'open_reminded'
             self.send_mail_user(
                 "email_templates/reminder.html",
-                subject='Erinnerung: TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(date=self.get_reservation_date()),
+                subject='Erinnerung: TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
+                    date=self.get_reservation_date()),
                 file_name='Erinnerung_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -231,7 +233,8 @@ class Mapper:
             self.status = 'canceled'
             self.send_mail_user(
                 "email_templates/cancelation.html",
-                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(
+                    date=self.get_reservation_date()),
                 file_name='Canceled_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -243,7 +246,8 @@ class Mapper:
             self.status = 'canceled'
             self.send_mail_user(
                 "email_templates/cancelation_24h.html",
-                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(date=self.get_reservation_date()),
+                subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(
+                    date=self.get_reservation_date()),
                 file_name='Canceled24h_{}_{}_{}'.format(
                     self.user_name,
                     self.payment_reference,
@@ -304,11 +308,12 @@ class Mapper:
         'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id),
         'concert': relationship(Concert, backref='reservations', order_by=transaction_table.c.transaction_id)
     })
-    mapper_registry.map_imperatively(Transaction, transaction_table)#), properties={
+    mapper_registry.map_imperatively(Transaction, transaction_table)  # ), properties={
     #    'reservation': relationship(Reservation, backref='transactions', order_by=transaction_table.c.transaction_id)
-    #})
+    # })
 
-    mapper_registry.map_imperatively(Concert, concert_table)#, properties={
+    mapper_registry.map_imperatively(Concert, concert_table)  # , properties={
+
     #    'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
 
     def get_concerts(self):
@@ -325,3 +330,43 @@ class Mapper:
             return reservations[0]
         else:
             return None
+
+    post_token_table = Table(
+        'post_tokens',
+        mapper_registry.metadata,
+        Column('pt_id', Integer, primary_key=True),
+        Column('token', String),
+        Column('token_time', TIMESTAMP),
+        Column('what_for', String),
+        Column('used', Boolean)
+    )
+
+    class Post_Token:
+        def gen_token(self):
+            if not self.token:
+                self.token = hashlib.sha1(str(datetime.now()).encode()).hexdigest()[:20]
+            return self.token
+
+        def is_valid(self):
+            return not self.used and self.token_time + timedelta(hours=2) > datetime.now()
+
+        def invalidate(self):
+            self.used = True
+
+    mapper_registry.map_imperatively(Post_Token, post_token_table)
+
+    def invalidate_token(self, token):
+        tokens = self.session.execute(sqlalchemy.sql.select(Mapper.Post_Token).where(Mapper.Post_Token.token==token))
+        tokens = [t[0] for t in tokens]
+        if len(tokens) <= 0:
+            return False
+
+        t = tokens[0]
+        if not t.is_valid():
+            return False
+
+        t.invalidate()
+        self.session.commit()
+        return True
+
+        return False

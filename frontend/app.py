@@ -11,25 +11,27 @@ import datetime
 app = Flask(__name__)
 db = Mapper(DB_URL)
 
-repost_tokens = {}
+#repost_tokens = {}
 
 
 @app.route("/")
 def landing():
     url_for('static', filename='style.css')
     url_for('static', filename='js.js')
-    repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
-    repost_tokens[repost_token] = 0  # set unused token
-    return render_template("index.html", concerts=db.get_concerts(), hidden_repost_token=repost_token)
+   # repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
+   # repost_tokens[repost_token] = 0  # set unused token
+    repost_token = Mapper.Post_Token(what_for='reserving', used=False, token_time=datetime.datetime.now())
+    repost_token.gen_token()
+    db.session.add(repost_token)
+    db.session.commit()
+    return render_template("index.html", concerts=db.get_concerts(), hidden_repost_token=repost_token.token)
 
 
 @app.route("/reserve", methods=['GET', 'POST'])
 def reserve():
     if request.method == 'POST':  # Maybe just have one function for landing & confirmed page?
         # check repost token
-        if request.form['hidden_repost_token'] in repost_tokens and repost_tokens[request.form['hidden_repost_token']] == 0:
-            repost_tokens[request.form['hidden_repost_token']] = 1
-        else:
+        if not db.invalidate_token(request.form['hidden_repost_token']):
             return render_template("error.html", error1="Das Formular hat leider seine Gültigkeit verloren.",
                                    error2="Sollten Sie bereits reserviert haben, überprüfen Sie Ihr Email-Postfach. Ansonsten laden Sie bitte die Seite neu und erstellen Sie eine neue Reservierung.")
 
