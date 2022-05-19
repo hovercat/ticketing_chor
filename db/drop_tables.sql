@@ -1,3 +1,7 @@
-drop table if exists transaction;
-drop table if exists reservation;
-drop table if exists concert;
+
+SET search_path TO ticketing,public;
+
+--truncate table concert CASCADE;
+truncate table reservation CASCADE;
+truncate table transaction;
+commit;

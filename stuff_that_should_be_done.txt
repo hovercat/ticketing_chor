@@ -1,7 +1,7 @@
 IMPORTANT:
     <check> Add hidden field in the reservation to prevent repost of same data.
     <check> Save emails als eml files.
-    Put logs somewhere where everybody has permission.
+    <check> Put logs somewhere where everybody has permission.
     <nope, font size increase> Datenschutzerklärung again on an own webpage in bigger font.
 
 General Design-Flaws/Ideas:
