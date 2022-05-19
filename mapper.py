@@ -11,8 +11,8 @@ from Mailgod import Mailgod
 from constants import DB_OPTIONS
 import locale
 
-locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # TODO boese hier
-# locale.setlocale(locale.LC_ALL, 'de_AT.UTF-8')
+#locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # TODO boese hier
+locale.setlocale(locale.LC_ALL, 'de_AT.UTF-8')
 mailgod = Mailgod()
 
 
