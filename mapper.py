@@ -49,9 +49,16 @@ class Mapper:
     )
 
     class Concert:
+        def __repr__(self):
+            return f'{self.concert_title}: {self.get_concert_date()} at {self.get_concert_time()}'
+
         def get_reserved_tickets(self):
             return list(filter(lambda res: res.status in ['open', 'open_reminded', 'finalized', 'new', 'disputed'],
                                self.reservations))
+
+        @property
+        def reserved_tickets_amount(self):
+            return self.get_reserved_tickets_amount()
 
         def get_reserved_tickets_amount(self):
             return sum(res.tickets_full_price + res.tickets_student_price for res in self.get_reserved_tickets())
@@ -62,11 +69,23 @@ class Mapper:
         def get_sold_tickets(self):
             return list(filter(lambda res: res.status in ['finalized'], self.reservations))
 
+        @property
+        def sold_tickets_amount(self):
+            return self.get_sold_tickets_amount()
+
         def get_sold_tickets_amount(self):
             return sum(res.tickets_full_price + res.tickets_student_price for res in self.get_sold_tickets())
 
+        @property
+        def sold_tickets_money(self):
+            return self.get_sold_tickets_amount_money()
+
         def get_sold_tickets_amount_money(self):
             return sum(res.tickets_full_price * res.concert.full_price + res.tickets_student_price * res.concert.student_price for res in self.get_sold_tickets())
+
+        @property
+        def available_tickets(self):
+            return self.get_available_tickets_amount()
 
         def get_available_tickets_amount(self):
             return self.total_tickets - self.get_reserved_tickets_amount()
@@ -101,7 +120,8 @@ class Mapper:
     )
 
     class Reservation:
-
+        def __repr__(self):
+            return f'{str(self.res_id)}: {self.user_name}/{self.user_email} kauft {str(self.tickets_full_price)} VP und {str(self.tickets_student_price)} SP Tickets.'
         # @orm.reconstructor
         # def reconstructor(self):
         #     self.payment_reference = self.get_payment_reference()
@@ -329,9 +349,9 @@ class Mapper:
     #    'reservation': relationship(Reservation, backref='transactions', order_by=transaction_table.c.transaction_id)
     # })
 
-    mapper_registry.map_imperatively(Concert, concert_table)  # , properties={
-
-    #    'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)})
+    mapper_registry.map_imperatively(Concert, concert_table )#, properties={
+        #'reservations': relationship(Reservation, backref='concert', order_by=reservation_table.c.res_id)}
+    #)
 
     def get_concerts(self):
         concert_query = sqlalchemy.sql.select(Mapper.Concert) \
