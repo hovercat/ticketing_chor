@@ -10,6 +10,7 @@ Next Steps:
 - add admin space
 - sleaken code
 - stronger employment of mvc-pattern
+- get rid of hacky code
 
 
 Buy tickets (and look at our tool) at https://tuwienchor.jörre.at
