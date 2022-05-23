@@ -3,13 +3,26 @@ import re
 import smtplib
 
 from flask import Flask, render_template, request, url_for
+from flask_admin.contrib.sqla import ModelView
+
+from frontend.ReservationModelView import ReservationModelView
+from frontend.TransactionModelView import TransactionModelView
+from frontend.ConcertModelView import ConcertModelView
 from mapper import Mapper
 from constants import *
 import json
 import datetime
+from flask_admin import Admin
 
 app = Flask(__name__)
 db = Mapper(DB_URL)
+
+# flask admin
+app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
+admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstrap3')
+#admin.add_view(ConcertModelView(Mapper.Concert, db.session))
+#admin.add_view(ReservationModelView(Mapper.Reservation, db.session))
+#admin.add_view(TransactionModelView(Mapper.Transaction, db.session))
 
 #repost_tokens = {}
 
@@ -24,7 +37,11 @@ def landing():
     repost_token.gen_token()
     db.session.add(repost_token)
     db.session.commit()
-    return render_template("index.html", concerts=db.get_concerts(), hidden_repost_token=repost_token.token)
+    concerts = db.get_concerts()
+    if len(concerts) > 0:
+        return render_template("index.html", concerts=db.get_concerts(), hidden_repost_token=repost_token.token)
+    else:
+        return render_template("no_concerts.html")
 
 
 @app.route("/reserve", methods=['GET', 'POST'])

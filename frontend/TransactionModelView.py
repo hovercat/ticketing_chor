@@ -1,6 +1,7 @@
-from flask_admin.contrib.sqla import ModelView
+from frontend.CustomModelView import CustomModelView
 
-class ReservationModelView(ModelView):
+
+class TransactionModelView(CustomModelView):
     can_delete = False
     can_edit = True
     can_create = True
@@ -8,8 +9,8 @@ class ReservationModelView(ModelView):
     #can_view_details = True
 
     form_ajax_refs = {
-        'transactions': {
-            'fields':  ['amount', 'payment_reference'],
+        'reservation': {
+            'fields':  ['user_name', 'user_email', 'tickets_full_price', 'tickets_student_price', 'payment_reference'],
             'page_size': 10
         }
     }

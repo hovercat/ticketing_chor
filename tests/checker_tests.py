@@ -10,7 +10,7 @@ MAIL_TEST = True
 from mapper import Mapper
 from constants import *
 
-SQL_CONNECTOR = "postgresql://postgres@localhost:5432/"
+SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 class CheckerTests(unittest.TestCase):
     def setUp(self) -> None:
         import mail_secrets as ms
@@ -18,6 +18,7 @@ class CheckerTests(unittest.TestCase):
         close_all_sessions()
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush
+        self.db.session.execute("SET search_path TO ticketing,public")
 
         with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())

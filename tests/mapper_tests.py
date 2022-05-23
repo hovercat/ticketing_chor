@@ -11,12 +11,13 @@ import unittest
 
 from mapper import Mapper
 
-SQL_CONNECTOR = "postgresql://postgres@localhost:5432/"
+SQL_CONNECTOR = "postgresql://postgres@localhost:5432/testing"
 class MapperTests(unittest.TestCase):
     def setUp(self) -> None:
         close_all_sessions()
         self.db = Mapper(SQL_CONNECTOR)
         self.db.session.no_autoflush
+        self.db.session.execute("SET search_path TO ticketing,public")
 
         with open('db/drop_tables.sql') as file:
             query = sqlalchemy.text(file.read())
@@ -27,9 +28,9 @@ class MapperTests(unittest.TestCase):
 
         self.concert = Mapper.Concert(
             concert_id=1,
-            date_sale_start=(datetime.datetime.today() - datetime.timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S'),
-            date_sale_end=(datetime.datetime.today() + datetime.timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S'),
-            date_concert=(datetime.datetime.today() + datetime.timedelta(days=21)).strftime('%Y-%m-%d %H:%M:%S'),
+            date_sale_start=(datetime.datetime.today() - datetime.timedelta(days=14)),
+            date_sale_end=(datetime.datetime.today() + datetime.timedelta(days=14)),
+            date_concert=(datetime.datetime.today() + datetime.timedelta(days=21)),
             full_price=100, student_price=1,
             duration_reminder=4, duration_cancelation=10, total_tickets=200
         )
@@ -38,8 +39,8 @@ class MapperTests(unittest.TestCase):
             user_email='aschl.uli+test@gmail.com',
             user_name='test_ulrich',
             tickets_full_price=4, tickets_student_price=2,
-            date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
-            date_email_activated=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            date_reservation_created=datetime.datetime.now(),
+            date_email_activated=datetime.datetime.now(),
             status='new',
             pay_state='none'
         )
