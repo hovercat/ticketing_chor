@@ -40,6 +40,9 @@ class Checker:
         return bank_account.get_transactions()
 
     def add_transactions_to_db(self, nordigen_transactions):
+        if nordigen_transactions.get('transactions', None) is None:
+            return []
+
         ng_trans = nordigen_transactions['transactions']['booked']
         transactions = []
 

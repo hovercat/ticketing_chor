@@ -1,0 +1,27 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+
+{{ super() }}
+<div>
+    Comfort Functions:
+    <ul>
+        <li> Reservations
+        <ul>
+            <li><a href='/admin/reservation/new'>New Reservation</a></li>
+            <li><a href='/admin/reservation?status=finalized'>Show Finalized</a></li>
+            <li><a href='/admin/reservation?status=canceled'>Show Canceled</a></li>
+            <li><a href='/admin/reservation?status=open'>Show Open</a></li>
+            <li><a href='/admin/reservation?status=disputed'>Show Disputed</a></li>
+        </ul>
+        </li>
+
+        <li> Transactions
+        <ul>
+            <li><a href='/admin/transaction/new'>New Transaction</a></li>
+            <li><a href='/admin/transaction/call_bank_api'>Load new transactions from Internet</a></li>
+        </ul>
+        </li>
+    </ul>
+</div>
+{% endblock body %}

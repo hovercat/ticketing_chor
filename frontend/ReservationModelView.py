@@ -1,6 +1,9 @@
 import datetime
 
-from sqlalchemy.engine import Transaction
+from flask import flash, request, redirect
+from flask_admin import expose
+from flask_admin.actions import action
+from flask_admin.model.template import LinkRowAction
 
 from frontend.CustomModelView import CustomModelView
 from mapper import Mapper
@@ -8,17 +11,21 @@ from wtforms import validators as v
 
 
 class ReservationModelView(CustomModelView):
-    can_delete = True
-    can_edit = True
-    can_create = True
-    can_export = True
-    #can_view_details = True
+    def get_query(self):
+        query = self.session.query(self.model)
+        status_filter = request.args.get('status', None)
+        if status_filter == 'finalized':
+            query = query.filter(self.model.status == 'finalized')
+        elif status_filter == 'closed':
+            query = query.filter(self.model.status == 'closed')
+        elif status_filter == 'disputed':
+            query = query.filter(self.model.status == 'disputed')
+        elif status_filter == 'open':
+            query = query.filter(self.model.status.in_(['open', 'open_reminded', 'new', 'activated', 'new_seen']))
 
-    def create_form(self):
-        form = super(ReservationModelView, self).create_form()
+        return query
 
-        return form
-
+    #  Gets called right when model has been updated/created
     def after_model_change(self, form, reservation: Mapper.Reservation, is_created):
         if is_created and reservation.status == 'finalized':
             reservation.set_payment_reference()
@@ -30,6 +37,44 @@ class ReservationModelView(CustomModelView):
             reservation.finalize()
         else:
             pass
+
+    @action('finalize_list', 'Finalize Reservations')
+    def finalize_list(self, res_ids):
+        for res_id in res_ids:
+            flash(res_id)
+
+    @expose('/mail', methods=['GET'])
+    def mail_methods(self):
+        id = request.args.get('id', None)
+        if id is None:
+            return 'No id given'
+
+        qry = self.session.query(Mapper.Reservation).filter(Mapper.Reservation.res_id == id)
+        result = self.session.execute(qry)
+        res = result.first()[0]
+
+        func = request.args.get('func')
+        if func == 'activate':
+            res.activate()
+        elif func == 'finalize':
+            res.finalize()
+        elif func == 'cancel':
+            res.cancel()
+        elif func == 'remind':
+            res.remind()
+        self.session.commit()
+        return redirect('/admin/reservation')
+
+    column_extra_row_actions = [
+        LinkRowAction('glyphicon glyphicon-euro', 'mail?func=activate&id={row_id}', title='Activate AND Send Payment Details'),
+        LinkRowAction('glyphicon glyphicon-question-sign', 'mail?func=remind&id={row_id}', title='Send Reminder Mail'),
+        LinkRowAction('glyphicon glyphicon-check', 'mail?func=finalize&id={row_id}', title='Finalize AND Send Tickets'),
+        LinkRowAction('glyphicon glyphicon-remove', 'mail?func=cancel&id={row_id}', title='Cancel AND Send Cancelation Mail'),
+    ]
+
+    column_searchable_list = list(Mapper.reservation_table.c.keys())
+    column_filters = tuple(Mapper.reservation_table.c.keys())
+
 
     form_choices = {
         'status':[

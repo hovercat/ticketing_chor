@@ -2,9 +2,12 @@ import hashlib
 import re
 import smtplib
 
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, url_for, redirect, flash
 from flask_admin.contrib.sqla import ModelView
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import check_password_hash
 
+from frontend.AuthAdminIndexView import AuthAdminIndexView
 from frontend.ReservationModelView import ReservationModelView
 from frontend.TransactionModelView import TransactionModelView
 from frontend.ConcertModelView import ConcertModelView
@@ -12,27 +15,32 @@ from mapper import Mapper
 from constants import *
 import json
 import datetime
-from flask_admin import Admin
+from flask_admin import Admin, AdminIndexView
 
 app = Flask(__name__)
 db = Mapper(DB_URL)
 
 # flask admin
+admin_auth = HTTPBasicAuth()
+app.config['SECRET_KEY'] = FLASK_SECRET
 app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstrap3')
-#admin.add_view(ConcertModelView(Mapper.Concert, db.session))
-#admin.add_view(ReservationModelView(Mapper.Reservation, db.session))
-#admin.add_view(TransactionModelView(Mapper.Transaction, db.session))
 
-#repost_tokens = {}
+admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstrap3', index_view=AuthAdminIndexView(admin_auth))
+
+#admin.add_view(ConcertModelView(Mapper.Concert, db.session, admin_auth))
+#admin.add_view(ReservationModelView(Mapper.Reservation, db.session, admin_auth))
+#admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
+
+
+# repost_tokens = {}
 
 
 @app.route("/")
 def landing():
     url_for('static', filename='style.css')
     url_for('static', filename='js.js')
-   # repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
-   # repost_tokens[repost_token] = 0  # set unused token
+    # repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
+    # repost_tokens[repost_token] = 0  # set unused token
     repost_token = Mapper.Post_Token(what_for='reserving', used=False, token_time=datetime.datetime.now())
     repost_token.gen_token()
     db.session.add(repost_token)
@@ -75,7 +83,7 @@ def reserve():
             user_name=request.form['name'],
             tickets_full_price=tickets_full,
             tickets_student_price=tickets_student,
-            #date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            # date_reservation_created=datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             status='new',
             pay_state='none',
             concert_id=int(request.form['concertdate'])
@@ -143,6 +151,22 @@ def getprice(id):
 @app.route("/confirm")
 def confirm():
     pass
+
+
+@app.route("/login")
+@admin_auth.login_required
+def login():
+    if admin_auth.get_auth():
+        flash("Logged in!")
+        return redirect('/')
+
+
+@admin_auth.verify_password
+def verify_password(user, pw):
+    if user in admins.keys() and check_password_hash(admins[user], pw):
+        return True
+    else:
+        return False
 
 
 @app.errorhandler(404)

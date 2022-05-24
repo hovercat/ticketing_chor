@@ -1,14 +1,8 @@
-from flask_admin.contrib.sqla import ModelView
-
+from frontend.CustomModelView import CustomModelView
 from mapper import Mapper
 
 
-class ConcertModelView(ModelView):
-    can_delete = False
-    can_edit = True
-    can_create = True
-    can_export = True
-
+class ConcertModelView(CustomModelView):
     column_list = [
         'concert_title',
         'concert_location',
@@ -25,6 +19,8 @@ class ConcertModelView(ModelView):
         'sold_tickets_amount',
         'sold_tickets_money',
     ]
-
-
-
+    column_searchable_list = [
+        'concert_title',
+        'concert_location'
+    ]
+    column_filters = tuple(Mapper.concert_table.c.keys())

@@ -1,10 +1,8 @@
-api_secrets.py
 secret_tokens.sh
 *.pyc
-mail_secrets.py
 constants.py
 .idea/
 ACCESS_TOKEN
 mail.log
-nordigen_secrets.py
 verkaufstool
+secret_secrets.py

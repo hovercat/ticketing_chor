@@ -35,7 +35,7 @@ class Mapper:
     concert_table = Table(
         'concert',
         mapper_registry.metadata,
-        Column('concert_id', Integer, primary_key=True, nullable=False, autoincrement=False),
+        Column('concert_id', Integer, primary_key=True),
         Column('concert_title', String),
         Column('concert_location', String),
         Column('full_price', Float(2)),
@@ -227,6 +227,7 @@ class Mapper:
         def activate(self):
             self.status = 'activated'
             self.date_email_activated = datetime.now()
+
             self.send_mail_user(
                 "email_templates/activated.html",
                 subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
@@ -339,11 +340,16 @@ class Mapper:
     )
 
     class Transaction:
-        pass
+        def __repr__(self):
+            if self.reservation:
+                return f'Transaction {self.transaction_id}: by {self.debtor_name}, amount: {self.amount} for Reservation: {self.reservation}'
+            else:
+                return f'Transaction {self.transaction_id}: by {self.debtor_name}, amount: {self.amount}; no reservation found'
+
 
     mapper_registry.map_imperatively(Reservation, reservation_table, properties={
         'transactions': relationship(Transaction, backref='reservation', order_by=transaction_table.c.transaction_id),
-        'concert': relationship(Concert, backref='reservations', order_by=transaction_table.c.transaction_id)
+        'concert': relationship(Concert, backref='reservations', order_by=reservation_table.c.res_id)
     })
     mapper_registry.map_imperatively(Transaction, transaction_table)  # ), properties={
     #    'reservation': relationship(Reservation, backref='transactions', order_by=transaction_table.c.transaction_id)

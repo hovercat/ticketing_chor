@@ -1,0 +1,21 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+
+{{ super() }}
+<div>
+    New Transactions: {{ t_valid|length + t_invalid|length }} <br>
+    <br>
+    <br>
+    Valid Transactions: {{ t_valid|length }} <br>
+    {% for t in t_valid %}
+        {{ t }}<br>
+    {% endfor %}
+    <br>
+    Unrelated (?) Transactions: {{ t_invalid|length }} <br>
+    {% for t in t_invalid %}
+        {{ t }}<br>
+    {% endfor %}
+    <br>
+</div>
+{% endblock body %}
