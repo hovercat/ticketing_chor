@@ -360,9 +360,9 @@ class Mapper:
     #)
 
     def get_concerts(self):
-        concert_query = sqlalchemy.sql.select(Mapper.Concert) \
-            .where(datetime.today() > Mapper.Concert.date_sale_start) \
-            .where(datetime.today() < Mapper.Concert.date_sale_end)
+        concert_query = sqlalchemy.sql.select(Mapper.Concert) #\
+            #.where(datetime.today() > Mapper.Concert.date_sale_start) \
+            #.where(datetime.today() < Mapper.Concert.date_sale_end)
         return [c for c, in self.session.execute(concert_query)]
 
     def get_reservation_by_payment_reference(self, payment_reference):
