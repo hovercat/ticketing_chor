@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta
 
 from requests import HTTPError
-from sqlalchemy import func, sql, text
+from sqlalchemy import func, sql, text, literal_column
 from mapper import Mapper
 
 from nordigen import NordigenClient
@@ -66,8 +66,11 @@ class Checker:
             t.debtor_name = ng_t.get('debtorName', None)
 
             # connect with reservation
-            reservation_query = sql.select(Mapper.Reservation).where(
-                t.payment_reference == Mapper.Reservation.payment_reference)
+            reservation_query = sql.select(
+                Mapper.Reservation
+            ).where(
+                literal_column(f"'{t.payment_reference}'").contains(Mapper.Reservation.payment_reference)
+            )
             reservation_result = self.db.session.execute(reservation_query)
             reservation = reservation_result.first()
             if reservation is None:

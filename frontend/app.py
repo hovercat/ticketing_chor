@@ -27,9 +27,9 @@ app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
 admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstrap3', index_view=AuthAdminIndexView(admin_auth))
 
-#admin.add_view(ConcertModelView(Mapper.Concert, db.session, admin_auth))
-#admin.add_view(ReservationModelView(Mapper.Reservation, db.session, admin_auth))
-#admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
+admin.add_view(ConcertModelView(Mapper.Concert, db.session, admin_auth))
+admin.add_view(ReservationModelView(Mapper.Reservation, db.session, admin_auth))
+admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
 
 
 # repost_tokens = {}
@@ -158,7 +158,7 @@ def confirm():
 def login():
     if admin_auth.get_auth():
         flash("Logged in!")
-        return redirect('/')
+        return redirect('/admin')
 
 
 @admin_auth.verify_password
