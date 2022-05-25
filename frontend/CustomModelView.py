@@ -16,7 +16,7 @@ class CustomModelView(ModelView):
         # redirect to login page if user doesn't have access
         return redirect(url_for('login'))
 
-    can_delete = True
+    can_delete = False
     can_edit = True
     can_create = True
     can_export = True
