@@ -34,10 +34,10 @@ function updateTotal() {
     var total_tickets = n_full + n_student;
     if(total_tickets > 0 || total_tickets > seats_left) {
         $('#sendreservation').prop("disabled", false);
-        $('#errormsg').html("<strong>Ticketkontingent überschritten!</strong>");
-        $('#errormsg').show();
     } else {
         $('#sendreservation').prop("disabled", true);
+        $('#errormsg').html("<strong>Ticketkontingent überschritten!</strong>");
+        $('#errormsg').show();
     }
 
     //var total = n_student*price_student+n_full*price_full;
