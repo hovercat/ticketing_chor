@@ -208,8 +208,8 @@ class Mapper:
                     "email_templates/activate.html",
                     subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bitte bestätigen'.format(
                         date=self.get_reservation_date()),
-                    file_name='NeueReservierung_{}_{}_{}'.format(
-                        self.user_name,
+                    file_name='NeueReservierung_{}_{}'.format(
+                        #self.user_name,
                         self.payment_reference,
                         datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     )
@@ -232,8 +232,8 @@ class Mapper:
                 "email_templates/activated.html",
                 subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
                     date=self.get_reservation_date()),
-                file_name='Bezahlt_{}_{}_{}'.format(
-                    self.user_name,
+                file_name='Bezahlt_{}_{}'.format(
+                    #self.user_name,
                     self.payment_reference,
                     datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 )
@@ -246,8 +246,8 @@ class Mapper:
                 subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Zahlung erfolgt'.format(
                     date=self.get_reservation_date()),
                 extra_msg=extra_msg,
-                file_name='Finalisiert_{}_{}_{}'.format(
-                    self.user_name,
+                file_name='Finalisiert_{}_{}'.format(
+                    #self.user_name,
                     self.payment_reference,
                     datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 )
@@ -260,8 +260,8 @@ class Mapper:
                 "email_templates/reminder.html",
                 subject='Erinnerung: TU Wien Chor Konzert: Ihre Buchung vom {date} - Bezahlung'.format(
                     date=self.get_reservation_date()),
-                file_name='Erinnerung_{}_{}_{}'.format(
-                    self.user_name,
+                file_name='Erinnerung_{}_{}'.format(
+                    #self.user_name,
                     self.payment_reference,
                     datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 )
@@ -273,8 +273,8 @@ class Mapper:
                 "email_templates/cancelation.html",
                 subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(
                     date=self.get_reservation_date()),
-                file_name='Canceled_{}_{}_{}'.format(
-                    self.user_name,
+                file_name='Canceled_{}_{}'.format(
+                    #self.user_name,
                     self.payment_reference,
                     datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 )
@@ -286,8 +286,8 @@ class Mapper:
                 "email_templates/cancelation_24h.html",
                 subject='TU Wien Chor Konzert: Ihre Buchung vom {date} - Reservierung verfallen'.format(
                     date=self.get_reservation_date()),
-                file_name='Canceled24h_{}_{}_{}'.format(
-                    self.user_name,
+                file_name='Canceled24h_{}_{}'.format(
+                    #self.user_name,
                     self.payment_reference,
                     datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 )
@@ -300,8 +300,8 @@ class Mapper:
                     mailgod.mail_sale_managers,
                     _subject='Disputed Reservation',
                     _message=msg,
-                    file_name='DISPUTE_{}_{}_{}'.format(
-                        self.user_name,
+                    file_name='DISPUTE_{}_{}'.format(
+                        #self.user_name,
                         self.payment_reference,
                         datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     )

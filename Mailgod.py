@@ -83,7 +83,7 @@ class Mailgod:
                     log.write('Attempting to send emails ')
                     if not self.mail_off:
                         try:
-                            smtp.sendmail(self._from, [*_to, *_bcc], msg.as_string())
+                            smtp.sendmail(self._from, [*_to, *_bcc], msg.as_string().encode('ascii'))
                             self.log_email(msg, file_name)
                             log.write('[success]\n')
                         except smtplib.SMTPRecipientsRefused as e:
