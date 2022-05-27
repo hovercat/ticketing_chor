@@ -1,5 +1,5 @@
 # get access and refresh tokens
-curl -X POST "https://ob.nordigen.com/api/v2/token/new/" \                                                                                              ✔  base  
+curl -X POST "https://ob.nordigen.com/api/v2/token/new/" \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d "{
