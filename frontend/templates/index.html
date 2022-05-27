@@ -50,9 +50,10 @@
             <input type="number" max="10" min="0" name="tickets_student" id="tickets_student" class="ticket-amount" step="1" value="">
             <label for="tickets_full">Tickets Vollpreis {{ concerts[0].get_full_price_eur() }}</label>
             <input type="number" max="10" min="0" id="tickets_full" name="tickets_full" class="ticket-amount" step="1" value="">
-            <span>Gesamtpreis: <strong><span id="total"> 0,00 €</span></strong></span>
+            <span>Gesamtpreis: <strong><span id="total"> 0,00 €</span></strong></span><br>
+            <span id="errormsg" style="display: none;"></span>
             <div id="dsgvodiv">
-                <label for="dsgvo">Ich nehme die <a href=#dse>Datenschutzerklärung</a> zur Kenntnis</label>
+                <label for="dsgvo">Ich nehme die <a href="#dse" id="dsgvolink">Datenschutzerklärung</a> zur Kenntnis</label>
                 <input type="checkbox" id="dsgvo" name="dsgvo" required="True">
             </div>
             <input type="text" id="hidden_repost_token" name="hidden_repost_token" hidden="hidden" value="{{ hidden_repost_token }}">

@@ -33,8 +33,9 @@ function updateTotal() {
     n_student = isNaN(n_student) ? 0 : n_student;
     var total_tickets = n_full + n_student;
     if(total_tickets > 0 || total_tickets > seats_left) {
-        //TODO: Add here some notification if its too many seats
         $('#sendreservation').prop("disabled", false);
+        $('#errormsg').html("<strong>Ticketkontingent überschritten!</strong>");
+        $('#errormsg').show();
     } else {
         $('#sendreservation').prop("disabled", true);
     }
