@@ -58,6 +58,8 @@ class ReservationModelView(CustomModelView):
             res.activate()
         elif func == 'finalize':
             res.finalize()
+        elif func == 'cancel' and (res.status == 'new' or res.status == 'new_seen') and (datetime.datetime.now() - res.date_reservation_created) > datetime.timedelta(hours=24):
+            res.cancel_24h()
         elif func == 'cancel':
             res.cancel()
         elif func == 'remind':
@@ -69,7 +71,7 @@ class ReservationModelView(CustomModelView):
         LinkRowAction('glyphicon glyphicon-euro', 'mail?func=activate&id={row_id}', title='Activate AND Send Payment Details'),
         LinkRowAction('glyphicon glyphicon-question-sign', 'mail?func=remind&id={row_id}', title='Send Reminder Mail'),
         LinkRowAction('glyphicon glyphicon-check', 'mail?func=finalize&id={row_id}', title='Finalize AND Send Tickets'),
-        LinkRowAction('glyphicon glyphicon-remove', 'mail?func=cancel&id={row_id}', title='Cancel AND Send Cancelation Mail'),
+        LinkRowAction('glyphicon glyphicon-remove', 'mail?func=cancel&id={row_id}', title='Cancel AND Send Cancelation Mail')
     ]
 
     column_searchable_list = list(Mapper.reservation_table.c.keys())
