@@ -34,6 +34,7 @@ function updateTotal() {
     var total_tickets = n_full + n_student;
     if(total_tickets > 0 && total_tickets < seats_left) {
         $('#sendreservation').prop("disabled", false);
+        $('#errormsg').hide();
     } else if (total_tickets > 0 && total_tickets > seats_left) {
         $('#sendreservation').prop("disabled", true);
         $('#errormsg').html("<strong>Ticketkontingent überschritten!</strong>");
