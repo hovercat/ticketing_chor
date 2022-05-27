@@ -32,12 +32,13 @@ function updateTotal() {
     n_full = isNaN(n_full) ? 0 : n_full;
     n_student = isNaN(n_student) ? 0 : n_student;
     var total_tickets = n_full + n_student;
-    if(total_tickets > 0 || total_tickets > seats_left) {
+    if(total_tickets > 0 && total_tickets < seats_left) {
         $('#sendreservation').prop("disabled", false);
-    } else {
-        $('#sendreservation').prop("disabled", true);
+    } else if (total_tickets > 0 && total_tickets > seats_left) {
         $('#errormsg').html("<strong>Ticketkontingent überschritten!</strong>");
         $('#errormsg').show();
+    } else if (total_tickets < 0) {
+        $('#sendreservation').prop("disabled", true);
     }
 
     //var total = n_student*price_student+n_full*price_full;
