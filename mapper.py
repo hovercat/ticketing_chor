@@ -53,7 +53,7 @@ class Mapper:
             return f'{self.concert_title}: {self.get_concert_date()} at {self.get_concert_time()}'
 
         def get_reserved_tickets(self):
-            return list(filter(lambda res: res.status in ['open', 'open_reminded', 'finalized', 'new', 'disputed'],
+            return list(filter(lambda res: res.status in ['open', 'open_reminded', 'finalized', 'new', 'disputed', 'activated'],
                                self.reservations))
 
         @property
