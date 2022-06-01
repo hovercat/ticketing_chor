@@ -44,6 +44,8 @@ class ReservationModelView(CustomModelView):
         'paid_amount'
     ]
 
+    column_sortable_list = column_list
+
     named_filter_urls = True
 
     #  Gets called right when model has been updated/created
