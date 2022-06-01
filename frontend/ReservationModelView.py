@@ -120,7 +120,7 @@ class ReservationModelView(CustomModelView):
         'tickets_student_price':  { 'default': 0, 'validators': [v.InputRequired(), v.NumberRange(0, 50)]},
         'status': { 'validators': [v.DataRequired()]},
         'concert': { 'validators': [v.DataRequired()]},
-        'transactions': { 'validators': [v.DataRequired()]},
+        'transactions': { 'validators': []},
     }
 
     form_ajax_refs = {
