@@ -4,11 +4,13 @@
 
 {{ super() }}
 <div>
-    Comfort Functions:
+    Hier gehts zum Barverkauf: <a href='/admin/reservation/new'>BARVERKAUF</a> <br>
+    <br>
+
     <ul>
-        <li> Reservations
+        <li> <a href='/admin/concert'>Concerts</a>
+        <li> <a href='/admin/reservation'>Reservations</a>
         <ul>
-            <li><a href='/admin/reservation/new'>Create new Reservation | BARVERKAUF</a></li>
             <li><a href='/admin/reservation?flt0_status_not_in_list=finalized%2Ccanceled%2Cdisputed'>Unfinished reservations</a>
             <ul>
             <li><a href='/admin/reservation?flt0_status_not_in_list=finalized%2Ccanceled%2Cdisputed&payment=paid'>and paid</a>
@@ -16,11 +18,13 @@
             <li><a href='/admin/reservation?flt0_status_not_in_list=finalized%2Ccanceled%2Cdisputed&payment=strange'>and paid but not as expected</a>
             </ul>
             <li><a href='/admin/reservation?flt1_status_contains=finalized'>Finished reservations</a>
+            <li><a href='/admin/reservation?flt1_status_contains=canceled'>Canceled reservations</a>
+            <li><a href='/admin/reservation?flt1_status_contains=disputed'>Disputed reservations</a>
             <!--<li><a href='/admin/finished_reservations'>Finished reservations</a></li>-->
         </ul>
         </li>
 
-        <li> Transactions
+        <li> <a href='/admin/transaction'>Transactions</a></li>
         <ul>
             <li><a href='/admin/transaction/new'>New Transaction</a></li>
             <li><a href='/admin/transaction/call_bank_api'>Load new transactions from Internet</a>: Limitierte Ressource, sparsam verwenden. Limit irgendwo zw 5 und 10 Requests pro Tag.</li>
