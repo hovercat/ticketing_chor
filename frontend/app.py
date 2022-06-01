@@ -8,6 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
 from frontend.AuthAdminIndexView import AuthAdminIndexView
+from frontend.PaidReservationModelView import PaidReservationModelView
 from frontend.ReservationModelView import ReservationModelView
 from frontend.TransactionModelView import TransactionModelView
 from frontend.ConcertModelView import ConcertModelView
@@ -29,6 +30,7 @@ admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstr
 
 admin.add_view(ConcertModelView(Mapper.Concert, db.session, admin_auth))
 admin.add_view(ReservationModelView(Mapper.Reservation, db.session, admin_auth))
+#admin.add_view(PaidReservationModelView(Mapper.Reservation, db.session, admin_auth, name='Reservations (new version)', endpoint='res_new' ))
 admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
 
 

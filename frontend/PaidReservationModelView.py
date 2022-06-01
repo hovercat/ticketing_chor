@@ -4,8 +4,6 @@ from flask import flash, request, redirect
 from flask_admin import expose
 from flask_admin.actions import action
 from flask_admin.model.template import LinkRowAction
-from sqlalchemy import and_
-from sqlalchemy.sql.functions import coalesce, func
 
 from frontend.CustomModelView import CustomModelView
 from mapper import Mapper
@@ -14,37 +12,18 @@ from wtforms import validators as v
 
 class ReservationModelView(CustomModelView):
     def get_query(self):
-        q = self.session.query(
-            Mapper.Reservation
-        ).join(Mapper.Concert).outerjoin(Mapper.Transaction).group_by(Mapper.Reservation, Mapper.Concert)
+        query = self.session.query(self.model)
+        status_filter = request.args.get('status', None)
+        if status_filter == 'finalized':
+            query = query.filter(self.model.status == 'finalized')
+        elif status_filter == 'closed':
+            query = query.filter(self.model.status == 'closed')
+        elif status_filter == 'disputed':
+            query = query.filter(self.model.status == 'disputed')
+        elif status_filter == 'open':
+            query = query.filter(self.model.status.in_(['open', 'open_reminded', 'new', 'activated', 'new_seen']))
 
-        exp_amount = Mapper.Concert.full_price * Mapper.Reservation.tickets_full_price + Mapper.Concert.student_price * Mapper.Reservation.tickets_student_price
-        paid_amount = coalesce(func.sum(Mapper.Transaction.amount), 0).label("paid")
-
-        payment_filter = request.args.get('payment', None)
-        if payment_filter == 'paid':
-            q = q.having(exp_amount == paid_amount)
-        elif payment_filter == 'unpaid':
-            q = q.having(paid_amount == 0)
-        elif payment_filter == 'strange':
-            q = q.having(and_(paid_amount > 0, exp_amount != paid_amount))
-
-        return q
-
-    column_list = [
-        'res_id',
-        'concert_id',
-        'user_email',
-        'user_name',
-        'payment_reference',
-        'tickets_full_price',
-        'tickets_student_price',
-        'status',
-        'expected_amount',
-        'paid_amount'
-    ]
-
-    named_filter_urls = True
+        return query
 
     #  Gets called right when model has been updated/created
     def after_model_change(self, form, reservation: Mapper.Reservation, is_created):
@@ -97,17 +76,12 @@ class ReservationModelView(CustomModelView):
 
     column_searchable_list = list(Mapper.reservation_table.c.keys())
     column_filters = tuple(Mapper.reservation_table.c.keys())
+    column_list = list(Mapper.reservation_table.c.keys()) + ['expected_amount', 'paid_amount']
 
     form_choices = {
         'status':[
             ('open', 'Open Reservation'),
-            ('finalized', 'Finalized Reservation'),
-            ('new', '* New Reservation'),
-            ('new_seen', '* Seen new Reservation'),
-            ('activated', '* Email activated reservation'),
-            ('canceled', '* Canceled Reservation'),
-            ('disputed', '* Disputed Reservation'),
-            ('*', '* DO NOT CHOOSE STARRED *'),
+            ('finalized', 'Finalized Reservation')
         ]
     }
 

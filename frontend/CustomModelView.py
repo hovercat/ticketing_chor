@@ -5,8 +5,8 @@ from werkzeug.utils import redirect
 
 
 class CustomModelView(ModelView):
-    def __init__(self, model, session, auth: HTTPBasicAuth):
-        super().__init__(model, session)
+    def __init__(self, model, session, auth: HTTPBasicAuth, **kwargs):
+        super().__init__(model, session, **kwargs)
         self.auth = auth
 
     def is_accessible(self):

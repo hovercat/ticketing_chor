@@ -145,11 +145,19 @@ class Mapper:
             return self.tickets_full_price * self.concert.full_price + \
                    self.tickets_student_price * self.concert.student_price
 
+        @property
+        def expected_amount(self):
+            return self.get_expected_amount()
+
         def get_expected_amount_eur(self):
             return locale.currency(self.get_expected_amount(), '€')
 
         def get_paid_amount(self):
             return sum(payment.amount for payment in self.transactions)
+
+        @property
+        def paid_amount(self):
+            return self.get_paid_amount()
 
         def get_reservation_date(self):
             return self.date_reservation_created.strftime('%d.%m.%Y')
