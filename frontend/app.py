@@ -8,7 +8,6 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
 
 from frontend.AuthAdminIndexView import AuthAdminIndexView
-from frontend.PaidReservationModelView import PaidReservationModelView
 from frontend.ReservationModelView import ReservationModelView
 from frontend.TransactionModelView import TransactionModelView
 from frontend.ConcertModelView import ConcertModelView
