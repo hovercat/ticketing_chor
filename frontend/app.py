@@ -35,11 +35,17 @@ admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
 
 # repost_tokens = {}
 
+MAINTENANCE = True
+MAINTENANCE_DATE = "14. Juni 2022, von 14:45 bis 16:15"
 
 @app.route("/")
 def landing():
     url_for('static', filename='style.css')
     url_for('static', filename='js.js')
+
+    if MAINTENANCE:
+        return render_template("maintenance.html", maintenance_text = MAINTENANCE_DATE)
+
     # repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
     # repost_tokens[repost_token] = 0  # set unused token
     repost_token = Mapper.Post_Token(what_for='reserving', used=False, token_time=datetime.datetime.now())
