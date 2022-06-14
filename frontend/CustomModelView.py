@@ -3,7 +3,6 @@ from flask_admin.contrib.sqla import ModelView
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.utils import redirect
 
-
 class CustomModelView(ModelView):
     def __init__(self, model, session, auth: HTTPBasicAuth, **kwargs):
         super().__init__(model, session, **kwargs)

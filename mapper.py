@@ -163,7 +163,12 @@ class Mapper:
             return self.date_reservation_created.strftime('%d.%m.%Y')
 
         def get_latest_possible_payment_date(self):
-            return (self.date_reservation_created + timedelta(days=self.concert.duration_cancelation)).strftime(
+            latest_date_duration = self.date_reservation_created + timedelta(days=self.concert.duration_cancelation)
+            latest_date_concert = self.concert.date_concert - timedelta(days=4)
+
+            latest_date_possible = latest_date_duration if latest_date_duration <= latest_date_concert else latest_date_concert
+
+            return latest_date_possible.strftime(
                 '%d.%m.%Y')
 
         def send_mail(self, message, subject, receivers, file_name=None):

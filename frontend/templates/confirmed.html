@@ -18,7 +18,8 @@
             Diese Reservierung wurde schon bestätigt.<br>
             {% endif %}
             <br>
-            Bitte überweisen Sie den Betrag von <b>{{ total }}</b> bis <b>{{ latest_payment_date }}</b> mit dem Verwendungszweck <b>{{ payment_reference }}</b> auf das Konto des TU Wien Chors. <br>
+            Bitte überweisen Sie den Betrag von <b>{{ total }}</b> spätestens am <b>{{ latest_payment_date }}</b> mit dem Verwendungszweck <b>{{ payment_reference }}</b> auf das Konto des TU Wien Chors. <br>
+            Sollte bis zum Konzerttag um 10:00 keine Überweisung eingelangt sein, werden die Tickets automatisch storniert.<br>
             <br>
             <h4>Überweisungsdaten:</h4>
             IBAN: <b>AT78 1420 0200 1094 2560</b><br>
@@ -26,7 +27,12 @@
             Betrag: <b>{{ total }}</b><br>
             <br>
             <br>
-            Die Zahlungsdetails sind Ihnen via E-Mail übermittelt worden. <br>
+            Die Zahlungsdetails sind auch via E-Mail gesendet worden. <br>
+            <br>
+            Danke für Ihre Reservierung, wir freuen uns auf Ihr Kommen.<br>
+            <br>
+            Musikalische Grüße,<br>
+            TU Wien Chor
         </span>
         </div>
     </div>

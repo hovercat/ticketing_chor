@@ -35,7 +35,7 @@ admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
 
 # repost_tokens = {}
 
-MAINTENANCE = True
+MAINTENANCE = False
 MAINTENANCE_DATE = "14. Juni 2022, von 14:45 bis 16:45"
 
 @app.route("/")
