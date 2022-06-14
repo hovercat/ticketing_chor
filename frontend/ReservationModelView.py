@@ -3,6 +3,7 @@ import datetime
 from flask import flash, request, redirect
 from flask_admin import expose
 from flask_admin.actions import action
+from flask_admin.model import typefmt
 from flask_admin.model.template import LinkRowAction
 from sqlalchemy import and_
 from sqlalchemy.sql.functions import coalesce, func
@@ -33,16 +34,23 @@ class ReservationModelView(CustomModelView):
 
     column_list = [
         'res_id',
-        'concert_id',
+        'date_reservation_created',
         'user_email',
         'user_name',
         'payment_reference',
         'tickets_full_price',
         'tickets_student_price',
         'status',
+        'date_reminded',
         'expected_amount',
         'paid_amount'
     ]
+
+    def date_format(view, value):
+        return value.strftime('%d.%m.%Y')
+
+    column_type_formatters = dict(typefmt.BASE_FORMATTERS)
+    column_type_formatters.update({datetime.date: date_format})
 
     column_sortable_list = column_list
 
