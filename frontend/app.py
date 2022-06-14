@@ -36,7 +36,7 @@ admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
 # repost_tokens = {}
 
 MAINTENANCE = True
-MAINTENANCE_DATE = "14. Juni 2022, von 14:45 bis 16:15"
+MAINTENANCE_DATE = "14. Juni 2022, von 14:45 bis 16:45"
 
 @app.route("/")
 def landing():
