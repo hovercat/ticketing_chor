@@ -54,6 +54,8 @@ class ReservationModelView(CustomModelView):
 
     column_sortable_list = column_list
 
+    column_default_sort = ('res_id', True)
+
     named_filter_urls = True
 
     #  Gets called right when model has been updated/created
