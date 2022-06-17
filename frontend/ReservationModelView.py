@@ -91,7 +91,7 @@ class ReservationModelView(CustomModelView):
             res.activate()
         elif func == 'finalize':
             res.finalize()
-        elif func == 'cancel' and (res.status == 'new' or res.status == 'new_seen') and (datetime.datetime.now() - res.date_reservation_created) > datetime.timedelta(hours=24):
+        elif func == 'cancel' and (res.status == 'new' or res.status == 'new_seen'):
             res.cancel_24h()
         elif func == 'cancel':
             res.cancel()
