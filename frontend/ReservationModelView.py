@@ -87,6 +87,8 @@ class ReservationModelView(CustomModelView):
         res = result.first()[0]
 
         func = request.args.get('func')
+        if func == 'activation_again':
+            res.reserve()
         if func == 'activate':
             res.activate()
         elif func == 'finalize':
@@ -101,6 +103,7 @@ class ReservationModelView(CustomModelView):
         return redirect('/admin/reservation')
 
     column_extra_row_actions = [
+        LinkRowAction('glyphicon glyphicon-asterisk', 'mail?func=activation_again&id={row_id}', title='Send "Please activate"-Mail again'),
         LinkRowAction('glyphicon glyphicon-euro', 'mail?func=activate&id={row_id}', title='Activate AND Send Payment Details'),
         LinkRowAction('glyphicon glyphicon-question-sign', 'mail?func=remind&id={row_id}', title='Send Reminder Mail'),
         LinkRowAction('glyphicon glyphicon-check', 'mail?func=finalize&id={row_id}', title='Finalize AND Send Tickets'),
