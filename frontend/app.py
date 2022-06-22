@@ -25,18 +25,22 @@ admin_auth = HTTPBasicAuth()
 app.config['SECRET_KEY'] = FLASK_SECRET
 app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
-admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstrap3', index_view=AuthAdminIndexView(admin_auth))
+admin = Admin(app, name='TU Chor Ticketing Adminbereich', template_mode='bootstrap3',
+              index_view=AuthAdminIndexView(admin_auth))
 
 admin.add_view(ConcertModelView(Mapper.Concert, db.session, admin_auth))
 admin.add_view(ReservationModelView(Mapper.Reservation, db.session, admin_auth))
-#admin.add_view(PaidReservationModelView(Mapper.Reservation, db.session, admin_auth, name='Reservations (new version)', endpoint='res_new' ))
+# admin.add_view(PaidReservationModelView(Mapper.Reservation, db.session, admin_auth, name='Reservations (new version)', endpoint='res_new' ))
 admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
-
 
 # repost_tokens = {}
 
 MAINTENANCE = False
 MAINTENANCE_DATE = "14. Juni 2022, von 14:45 bis 16:45"
+
+CLOSING_TIME = datetime.datetime(2022, 6, 22, 4, 0, 0)
+
+
 
 @app.route("/")
 def landing():
@@ -44,7 +48,9 @@ def landing():
     url_for('static', filename='js.js')
 
     if MAINTENANCE:
-        return render_template("maintenance.html", maintenance_text = MAINTENANCE_DATE)
+        return render_template("maintenance.html", maintenance_text=MAINTENANCE_DATE)
+    if datetime.datetime.now() > CLOSING_TIME:
+        return render_template("see_you_soon.html")
 
     # repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
     # repost_tokens[repost_token] = 0  # set unused token
@@ -61,6 +67,9 @@ def landing():
 
 @app.route("/reserve", methods=['GET', 'POST'])
 def reserve():
+    if datetime.datetime.now() > CLOSING_TIME:
+        return render_template("see_you_soon.html")
+
     if request.method == 'POST':  # Maybe just have one function for landing & confirmed page?
         # check repost token
         if not db.invalidate_token(request.form['hidden_repost_token']):
