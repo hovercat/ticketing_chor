@@ -47,7 +47,7 @@ class ReservationModelView(CustomModelView):
     ]
 
     def date_format(view, value):
-        return value.strftime('%d.%m.%Y')
+        return value.strftime('%d.%m.%Y %H:%S')
 
     column_type_formatters = dict(typefmt.BASE_FORMATTERS)
     column_type_formatters.update({datetime.date: date_format})
