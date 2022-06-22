@@ -38,7 +38,7 @@ admin.add_view(TransactionModelView(Mapper.Transaction, db.session, admin_auth))
 MAINTENANCE = False
 MAINTENANCE_DATE = "14. Juni 2022, von 14:45 bis 16:45"
 
-CLOSING_TIME = datetime.datetime(2022, 6, 22, 4, 0, 0)
+CLOSING_TIME = datetime.datetime(2022, 6, 22, 10, 0, 0)
 
 
 
