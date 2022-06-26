@@ -47,10 +47,10 @@ def landing():
     url_for('static', filename='style.css')
     url_for('static', filename='js.js')
 
-    if MAINTENANCE:
-        return render_template("maintenance.html", maintenance_text=MAINTENANCE_DATE)
-    if datetime.datetime.now() > CLOSING_TIME:
-        return render_template("see_you_soon.html")
+    #if MAINTENANCE:
+    #    return render_template("maintenance.html", maintenance_text=MAINTENANCE_DATE)
+    #if datetime.datetime.now() > CLOSING_TIME:
+     #   return render_template("see_you_soon.html")
 
     # repost_token = hashlib.sha1(str(datetime.datetime.now()).encode()).hexdigest()[:20]
     # repost_tokens[repost_token] = 0  # set unused token
@@ -58,9 +58,20 @@ def landing():
     repost_token.gen_token()
     db.session.add(repost_token)
     db.session.commit()
+
     concerts = db.get_concerts()
-    if len(concerts) > 0:
-        return render_template("index.html", concerts=db.get_concerts(), hidden_repost_token=repost_token.token)
+
+   # concerts_past = filter(lambda c: c.date_concert < datetime.datetime.now(), concerts)
+    concerts_sale_closed = list(filter(lambda c: c.date_concert >= datetime.datetime.now() and
+                                            c.date_sale_end > datetime.datetime.now(), concerts))
+    concerts_sale_open = list(filter(lambda c: c.date_concert >= datetime.datetime.now() and
+                                          c.date_sale_start <= datetime.datetime.now() <= c.date_sale_end, concerts))
+    # TODO what if two concerts, but one is closed for sale already?
+
+    if len(concerts_sale_open) > 0:
+        return render_template("index.html", concerts=concerts_sale_open, hidden_repost_token=repost_token.token)
+    elif len(concerts_sale_closed) > 0:
+        return render_template("see_you_soon.html", concerts = concerts_sale_closed)
     else:
         return render_template("no_concerts.html")
 
